@@ -1,0 +1,32 @@
+@if (isOpen()) {
+	<!-- Backdrop (offcanvas and fullscreen modes) -->
+	@if (mode() !== 'dropdown') {
+		<div class="hub-nav-mobile-panel__backdrop" (click)="onBackdropClick()"></div>
+	}
+
+	<!-- Panel content -->
+	<div class="hub-nav-mobile-panel__content">
+		<!-- Close button -->
+		<div class="hub-nav-mobile-panel__header">
+			<button
+				type="button"
+				class="hub-nav-mobile-panel__close"
+				aria-label="Close navigation"
+				(click)="onCloseClick()"
+			>
+				<span aria-hidden="true">&times;</span>
+			</button>
+		</div>
+
+		<!-- Navigation items in vertical accordion mode -->
+		<div class="hub-nav-mobile-panel__body">
+			<hub-nav-item-list
+				[items]="items()"
+				[depth]="0"
+				[forceAccordionMode]="true"
+				(itemClick)="onItemClick($event)"
+				(dropdownToggle)="onDropdownToggle($event)"
+			/>
+		</div>
+	</div>
+}

@@ -1,0 +1,315 @@
+@use '../../styles/nav-tokens';
+
+:host {
+	display: block;
+}
+
+nav {
+	display: flex;
+	background-color: var(--hub-nav-bg, #fff);
+	color: var(--hub-nav-color, #212529);
+	border: var(--hub-nav-border-width, 1px) var(--hub-nav-border-style, solid) var(--hub-nav-border-color, #dee2e6);
+	font-family: inherit;
+}
+
+// ── Fill mode ──
+// In vertical mode the host is display:flex;flex-direction:column (set via host
+// style binding in the component TS). The nav element uses flex:1 to stretch
+// and fill the available height when the host has an explicit dimension.
+
+:host(.hub-nav--horizontal) {
+	nav {
+		width: 100%;
+	}
+}
+
+// ── Horizontal ──
+:host(.hub-nav--horizontal) nav {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	padding: var(--hub-nav-horizontal-padding-y, 0) var(--hub-nav-horizontal-padding-x, 0);
+	gap: var(--hub-nav-horizontal-row-gap, 0);
+}
+
+// ── Vertical ──
+:host(.hub-nav--vertical) nav {
+	flex: 1;
+	min-height: 0;
+	flex-direction: column;
+	padding: var(--hub-nav-padding-y, 0.5rem) var(--hub-nav-padding-x, 1rem);
+	gap: var(--hub-nav-gap, 0.25rem);
+
+	> hub-nav-item-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--hub-nav-gap, 0.25rem);
+	}
+}
+
+// ── Collapsed / mobile top row ──
+// Declared after orientation blocks so it always wins over vertical desktop
+// rules without affecting non-collapsed layouts.
+:host(.hub-nav--collapsed) nav,
+:host(.hub-nav--collapsed.hub-nav--vertical) nav,
+:host(.hub-nav--collapsed.hub-nav--horizontal) nav {
+	display: flex;
+	flex: 0 0 auto;
+	width: 100%;
+	min-height: auto;
+	flex-direction: row;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: var(--hub-nav-gap, 0.25rem);
+	padding: var(--hub-nav-padding-y, 0.5rem) var(--hub-nav-padding-x, 1rem);
+	overflow: hidden;
+}
+
+// ── Main + Panels wrapper ──
+.hub-nav__main-and-panels {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+	align-items: stretch;
+
+	// Ensure panel container fills height
+	> hub-nav-panel-container {
+		flex: 1;
+		min-height: 0;
+	}
+}
+
+.hub-nav__primary-column {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
+:host(.hub-nav--sidebar-left) .hub-nav__main-and-panels {
+	flex-direction: row;
+}
+
+:host(.hub-nav--sidebar-right) .hub-nav__main-and-panels {
+	flex-direction: row-reverse;
+}
+
+// In vertical mode, the item-list inside the wrapper keeps column direction
+:host(.hub-nav--vertical) .hub-nav__main-and-panels {
+	> .hub-nav__primary-column {
+		display: flex;
+		flex-direction: column;
+		/*
+		 * Keep a stable base sidebar width so root items do not collapse when
+		 * panels are added.
+		 */
+		flex: 0 0 var(--hub-nav-panel-width, 16rem);
+		width: var(--hub-nav-panel-width, 16rem);
+		min-width: var(--hub-nav-panel-width, 16rem);
+
+		> hub-nav-item-list {
+			display: flex;
+			flex-direction: column;
+			gap: var(--hub-nav-gap, 0.25rem);
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-inline: var(--hub-nav-vertical-panel-padding-inline, 0.5rem);
+			padding-block: var(--hub-nav-vertical-panel-padding-block, 0);
+			/*
+			 * Root vertical items scroll inside their own container when they
+			 * exceed the available height.
+			 */
+			overflow-y: var(--hub-nav-vertical-items-overflow-y, auto);
+			overflow-x: var(--hub-nav-vertical-items-overflow-x, hidden);
+		}
+	}
+
+	> hub-nav-panel-container {
+		/*
+		 * Panels participate in normal flex flow with intrinsic width (sum of
+		 * panel widths). This makes the whole sidebar expand and push sibling
+		 * content instead of floating above it.
+		 */
+		flex: 0 0 auto;
+		width: auto;
+		min-width: 0;
+	}
+}
+
+/* Horizontal desktop row 1: start | root items | end */
+:host(.hub-nav--horizontal) .hub-nav__horizontal-top-row {
+	display: flex;
+	align-items: center;
+	gap: var(--hub-nav-gap, 0.25rem);
+}
+
+:host(.hub-nav--horizontal) .hub-nav__horizontal-root-list {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: var(--hub-nav-horizontal-items-justify, center);
+	gap: var(--hub-nav-gap, 0.25rem);
+	flex: 0 0 auto;
+	/*
+	 * Keep items centered when they fit and allow natural growth when they
+	 * exceed the available width.
+	 */
+	width: max-content;
+	min-width: 100%;
+	/*
+	 * Center when there is free room; when content overflows, auto margins
+	 * collapse so the list starts at the scroll origin (no clipped first item).
+	 */
+	margin-inline: auto;
+	overflow: visible;
+}
+
+:host(.hub-nav--horizontal) .hub-nav__horizontal-root-scroll {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: var(--hub-nav-horizontal-panel-padding-y, 0.5rem) var(--hub-nav-horizontal-panel-padding-x, 0);
+	/*
+	 * Root horizontal items scroll on X when they exceed available width.
+	 * Y is hidden to avoid vertical clipping artifacts in row layout.
+	 */
+	overflow-x: var(--hub-nav-horizontal-items-overflow-x, auto);
+	overflow-y: var(--hub-nav-horizontal-items-overflow-y, hidden);
+}
+
+/*
+ * Keep scrolling behavior while hiding native scrollbars by default.
+ * Theme tokens can override these values to show standard or thin scrollbars.
+ */
+:host(.hub-nav--horizontal) .hub-nav__horizontal-root-scroll,
+:host(.hub-nav--vertical) .hub-nav__primary-column > hub-nav-item-list {
+	-ms-overflow-style: none;
+	scrollbar-width: var(--hub-nav-scrollbar-width, none);
+	scrollbar-color: var(--hub-nav-scrollbar-color, transparent transparent);
+
+	&::-webkit-scrollbar {
+		width: var(--hub-nav-scrollbar-webkit-size, 0);
+		height: var(--hub-nav-scrollbar-webkit-size, 0);
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--hub-nav-scrollbar-thumb-color, transparent);
+		border-radius: var(--hub-nav-scrollbar-thumb-radius, 999px);
+	}
+
+	&::-webkit-scrollbar-track {
+		background-color: var(--hub-nav-scrollbar-track-color, transparent);
+	}
+}
+
+/* Horizontal desktop row 2: full-width panel row */
+:host(.hub-nav--horizontal) .hub-nav__horizontal-panel-row {
+	width: 100%;
+	min-width: 0;
+}
+
+:host(.hub-nav--horizontal) .hub-nav__horizontal-panel-row > hub-nav-panel-container {
+	width: 100%;
+	min-width: 0;
+}
+
+// ── Start/End slots ──
+.hub-nav-slot {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0 var(--hub-nav-brand-padding-x, 0.5rem);
+	font-size: var(--hub-nav-brand-font-size, 1.25rem);
+	font-weight: var(--hub-nav-brand-font-weight, 600);
+	color: var(--hub-nav-brand-color, #212529);
+	text-decoration: none;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+:host(.hub-nav--vertical) .hub-nav-slot--start {
+	width: 100%;
+	align-self: stretch;
+	box-sizing: border-box;
+	padding-bottom: var(--hub-nav-padding-y, 0.5rem);
+	border-bottom: var(--hub-nav-border-width, 1px) var(--hub-nav-border-style, solid)
+		var(--hub-nav-border-color, #dee2e6);
+	margin-bottom: var(--hub-nav-gap, 0.25rem);
+}
+
+:host(.hub-nav--vertical) .hub-nav-slot--end {
+	width: 100%;
+	align-self: stretch;
+	box-sizing: border-box;
+	margin-top: auto;
+	padding-top: var(--hub-nav-padding-y, 0.5rem);
+	border-top: var(--hub-nav-border-width, 1px) var(--hub-nav-border-style, solid)
+		var(--hub-nav-border-color, #dee2e6);
+}
+
+:host(.hub-nav--horizontal) .hub-nav-slot--end {
+	margin-inline-start: auto;
+	justify-content: flex-end;
+}
+
+:host(.hub-nav--horizontal) .hub-nav-slot--start,
+:host(.hub-nav--horizontal) .hub-nav-slot--end {
+	/* Slots are constrained to row 1 only. */
+	align-self: center;
+	height: auto;
+	min-height: 0;
+	max-height: none;
+}
+
+/*
+ * When collapsed, start/end slot sizing is unified for both orientations so
+ * vertical-specific full-width slot rules do not force line breaks.
+ */
+:host(.hub-nav--collapsed.hub-nav--vertical) .hub-nav-slot--start,
+:host(.hub-nav--collapsed.hub-nav--vertical) .hub-nav-slot--end,
+:host(.hub-nav--collapsed.hub-nav--horizontal) .hub-nav-slot--start,
+:host(.hub-nav--collapsed.hub-nav--horizontal) .hub-nav-slot--end {
+	width: 0;
+	align-self: stretch;
+	display: flex;
+	align-items: center;
+	flex: 1 1 0;
+	min-width: 0;
+	border: 0;
+	margin: 0;
+	padding: 0 var(--hub-nav-brand-padding-x, 0.5rem);
+}
+
+:host(.hub-nav--collapsed) .hub-nav-slot--start {
+	justify-content: flex-start;
+}
+
+:host(.hub-nav--collapsed) .hub-nav-slot--end {
+	margin-inline-start: 0;
+	justify-content: flex-end;
+}
+
+:host(.hub-nav--collapsed) hub-nav-toggler {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	padding-inline: var(--hub-nav-brand-padding-x, 0.5rem);
+}
+
+// ── Positioning ──
+:host(.hub-nav--sticky) {
+	position: sticky;
+	top: var(--hub-nav-sticky-top, 0px);
+	align-self: flex-start;
+	max-height: calc(100vh - var(--hub-nav-sticky-top, 0px));
+	z-index: var(--hub-sys-z-index-sticky, 1020);
+}
+
+:host(.hub-nav--fixed) {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: var(--hub-sys-z-index-fixed, 1030);
+}

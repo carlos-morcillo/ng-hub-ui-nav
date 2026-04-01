@@ -1,0 +1,139 @@
+:host {
+	display: flex;
+	flex-direction: column;
+	gap: var(--hub-nav-gap, 0.25rem);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+// ── Item wrapper (enables relative positioning for dropdowns) ──
+.hub-nav-item-wrapper {
+	position: relative;
+}
+
+// ── Dropdown panel (flyout / horizontal dropdown) ──
+.hub-nav-dropdown {
+	position: absolute;
+	z-index: var(--hub-nav-dropdown-z-index, 1000);
+	min-width: var(--hub-nav-dropdown-min-width, 12rem);
+	background-color: var(--hub-nav-dropdown-bg, #fff);
+	color: var(--hub-nav-dropdown-color, #212529);
+	border: var(--hub-nav-border-width, 1px) var(--hub-nav-border-style, solid)
+		var(--hub-nav-dropdown-border-color, #dee2e6);
+	border-radius: var(--hub-nav-dropdown-border-radius, 0.375rem);
+	box-shadow: var(--hub-nav-dropdown-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+	padding: var(--hub-nav-dropdown-padding-y, 0.5rem) 0;
+}
+
+// ── Accordion panel (inline children) ──
+.hub-nav-accordion {
+	overflow: hidden;
+	animation: hubNavAccordionExpand var(--hub-nav-accordion-transition, 350ms ease) forwards;
+}
+
+@keyframes hubNavAccordionExpand {
+	from {
+		max-height: 0;
+		opacity: 0;
+	}
+	to {
+		max-height: 100vh;
+		opacity: 1;
+	}
+}
+
+// ── Horizontal mode ──
+:host-context(.hub-nav--horizontal) {
+	& {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	> .hub-nav-item-wrapper {
+		flex: 0 0 auto;
+	}
+
+	// Root-level dropdowns open below
+	.hub-nav-item-wrapper > .hub-nav-dropdown {
+		top: 100%;
+		left: 0;
+		margin-top: 4px;
+	}
+
+	// Nested dropdowns open to the right
+	.hub-nav-dropdown .hub-nav-item-wrapper > .hub-nav-dropdown {
+		top: 0;
+		left: 100%;
+		margin-top: 0;
+		margin-left: 4px;
+	}
+}
+
+// ── Vertical mode — flyout ──
+:host-context(.hub-nav--vertical) {
+	.hub-nav-item-wrapper > .hub-nav-dropdown {
+		top: 0;
+		left: 100%;
+		margin-left: 4px;
+	}
+
+	// Nested dropdowns in vertical mode also open to the right
+	.hub-nav-dropdown .hub-nav-item-wrapper > .hub-nav-dropdown {
+		top: 0;
+		left: 100%;
+		margin-left: 4px;
+		margin-top: 0;
+	}
+}
+
+// ── Inside a dropdown: always vertical, full-width ──
+// Overrides the horizontal :host-context rule for nested lists inside dropdowns.
+// Must use :host-context because Angular encapsulation prevents parent-scoped
+// selectors from reaching recursive child instances.
+:host-context(.hub-nav-dropdown) {
+	flex-direction: column;
+	align-items: stretch;
+}
+
+// ── Inside an accordion: always vertical ──
+:host-context(.hub-nav-accordion) {
+	flex-direction: column;
+	align-items: stretch;
+}
+
+// Forced accordion mode (used by collapsed/mobile panel) must be declared
+// after orientation rules so it overrides horizontal root menubar layout.
+:host(.hub-nav-item-list--force-accordion) {
+	width: 100%;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--hub-nav-mobile-accordion-gap, 0.25rem);
+
+	> .hub-nav-item-wrapper {
+		display: block;
+		width: 100%;
+		flex: 1 1 auto;
+	}
+
+	.hub-nav-item-wrapper > .hub-nav-dropdown {
+		position: static;
+		top: auto;
+		left: auto;
+		margin: 0;
+		min-width: 0;
+		width: 100%;
+		box-shadow: none;
+	}
+
+	.hub-nav-accordion {
+		margin-block-start: var(--hub-nav-mobile-accordion-nested-spacing, 0.25rem);
+	}
+}
+
+// ── Reduced motion ──
+@media (prefers-reduced-motion: reduce) {
+	.hub-nav-accordion {
+		animation: none;
+	}
+}

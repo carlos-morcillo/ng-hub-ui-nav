@@ -1,0 +1,118 @@
+@if (itemTemplate()) {
+	<!-- Custom template rendering -->
+	<ng-container [ngTemplateOutlet]="itemTemplate()!" [ngTemplateOutletContext]="templateContext()" />
+} @else if (isHeader()) {
+	<!-- Header item: non-interactive section label -->
+	<span class="hub-nav-item__header" role="presentation">{{ item().label }}</span>
+} @else if (isLink() && resolvedRoute()) {
+	<!-- Link item: routable anchor -->
+	<a
+		class="hub-nav-item__link"
+		[class.hub-nav-item__link--active]="isActive()"
+		role="menuitem"
+		[routerLink]="resolvedRoute()"
+		[queryParams]="item().queryParams"
+		[fragment]="item().fragment"
+		[class.hub-nav-item__link--disabled]="item().disabled"
+		[attr.tabindex]="item().disabled ? -1 : 0"
+		[attr.aria-disabled]="item().disabled || null"
+		[attr.aria-current]="isActive() ? 'page' : null"
+		(click)="onItemClick($event)"
+	>
+		@if (item().icon) {
+			<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+		}
+		<span class="hub-nav-item__label">{{ item().label }}</span>
+		@if (item().badge) {
+			<span class="hub-nav-item__badge" [class]="item().badgeClass">{{ item().badge }}</span>
+		}
+	</a>
+} @else if ((isDropdown() || hasChildren()) && resolvedRoute()) {
+	<!-- Routable dropdown: link area navigates, caret area toggles submenu -->
+	<div class="hub-nav-item__compound">
+		<a
+			class="hub-nav-item__link"
+			[class.hub-nav-item__link--split]="showCaret()"
+			role="menuitem"
+			[class.hub-nav-item__link--active]="isActive()"
+			[routerLink]="resolvedRoute()"
+			[queryParams]="item().queryParams"
+			[fragment]="item().fragment"
+			[class.hub-nav-item__link--disabled]="item().disabled"
+			[attr.tabindex]="item().disabled ? -1 : 0"
+			[attr.aria-disabled]="item().disabled || null"
+			[attr.aria-current]="isActive() ? 'page' : null"
+			(click)="onRouteItemClick($event)"
+		>
+			@if (item().icon) {
+				<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+			}
+			<span class="hub-nav-item__label">{{ item().label }}</span>
+			@if (item().badge) {
+				<span class="hub-nav-item__badge" [class]="item().badgeClass">{{ item().badge }}</span>
+			}
+		</a>
+
+		@if (showCaret()) {
+			<button
+				type="button"
+				class="hub-nav-item__caret-button"
+				[class.hub-nav-item__caret-button--active]="isActive()"
+				[class.hub-nav-item__caret-button--expanded]="isExpanded()"
+				[class.hub-nav-item__caret-button--disabled]="item().disabled"
+				[attr.tabindex]="item().disabled ? -1 : 0"
+				[attr.aria-label]="'Toggle ' + item().label"
+				[attr.aria-expanded]="isExpanded()"
+				[attr.aria-haspopup]="true"
+				[attr.aria-disabled]="item().disabled || null"
+				(click)="onCaretClick($event)"
+			>
+				<span class="hub-nav-item__caret" aria-hidden="true"></span>
+			</button>
+		}
+	</div>
+} @else if (isDropdown() || hasChildren()) {
+	<!-- Dropdown trigger: button that toggles a submenu -->
+	<button
+		type="button"
+		class="hub-nav-item__link hub-nav-item__dropdown-toggle"
+		role="menuitem"
+		[class.hub-nav-item__link--active]="isActive()"
+		[class.hub-nav-item__link--disabled]="item().disabled"
+		[attr.aria-expanded]="isExpanded()"
+		[attr.aria-haspopup]="true"
+		[attr.tabindex]="item().disabled ? -1 : 0"
+		[attr.aria-disabled]="item().disabled || null"
+		(click)="onItemClick($event)"
+	>
+		@if (item().icon) {
+			<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+		}
+		<span class="hub-nav-item__label">{{ item().label }}</span>
+		@if (item().badge) {
+			<span class="hub-nav-item__badge" [class]="item().badgeClass">{{ item().badge }}</span>
+		}
+		@if (showCaret()) {
+			<span class="hub-nav-item__caret" aria-hidden="true"></span>
+		}
+	</button>
+} @else {
+	<!-- Fallback: non-routable item (custom or link without route) -->
+	<button
+		type="button"
+		class="hub-nav-item__link"
+		role="menuitem"
+		[class.hub-nav-item__link--disabled]="item().disabled"
+		[attr.tabindex]="item().disabled ? -1 : 0"
+		[attr.aria-disabled]="item().disabled || null"
+		(click)="onItemClick($event)"
+	>
+		@if (item().icon) {
+			<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+		}
+		<span class="hub-nav-item__label">{{ item().label }}</span>
+		@if (item().badge) {
+			<span class="hub-nav-item__badge" [class]="item().badgeClass">{{ item().badge }}</span>
+		}
+	</button>
+}

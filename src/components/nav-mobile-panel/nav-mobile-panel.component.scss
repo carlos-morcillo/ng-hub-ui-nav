@@ -1,0 +1,163 @@
+// ── Backdrop ──
+.hub-nav-mobile-panel__backdrop {
+	position: var(--hub-nav-mobile-overlay-position, fixed);
+	inset: 0;
+	z-index: calc(var(--hub-nav-mobile-z-index, 1030) - 1);
+	background-color: var(--hub-nav-mobile-backdrop-bg, rgba(0, 0, 0, 0.5));
+}
+
+// ── Panel content ──
+.hub-nav-mobile-panel__content {
+	position: var(--hub-nav-mobile-overlay-position, fixed);
+	z-index: var(--hub-nav-mobile-z-index, 1030);
+	display: flex;
+	flex-direction: column;
+	background-color: var(--hub-nav-mobile-bg, var(--hub-sys-surface-elevated, #fff));
+	color: var(--hub-nav-mobile-color, var(--hub-sys-text-primary, #212529));
+	transition: transform var(--hub-nav-mobile-transition, 300ms ease);
+	overflow-y: auto;
+}
+
+// ── Header ──
+.hub-nav-mobile-panel__header {
+	display: flex;
+	justify-content: flex-end;
+	padding: var(--hub-nav-padding-y, 0.5rem) var(--hub-nav-padding-x, 1rem);
+}
+
+// ── Close button ──
+.hub-nav-mobile-panel__close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	font-size: 1.5rem;
+	line-height: 1;
+	color: var(--hub-nav-color, #212529);
+	background: none;
+	border: 0;
+	border-radius: var(--hub-nav-item-border-radius, 0.25rem);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04));
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--hub-sys-focus-ring-color, rgba(13, 110, 253, 0.25));
+		outline-offset: -2px;
+	}
+}
+
+// ── Body ──
+.hub-nav-mobile-panel__body {
+	flex: 1;
+	padding: 0 var(--hub-nav-mobile-body-padding-inline, var(--hub-nav-padding-x, 1rem))
+		var(--hub-nav-mobile-body-padding-block-end, var(--hub-nav-padding-y, 0.5rem));
+	--hub-nav-item-padding-x: var(--hub-nav-mobile-item-padding-inline, 0.75rem);
+
+	/*
+	 * Mobile panel always renders a vertical list, regardless of root nav
+	 * orientation. This avoids horizontal menubar layout inside collapsed
+	 * overlays.
+	 */
+	> hub-nav-item-list {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		width: 100%;
+		padding-inline: var(--hub-nav-mobile-root-padding-inline, 0.5rem);
+		box-sizing: border-box;
+	}
+}
+
+// ══════════════════════════════════════════
+// Mode: Offcanvas
+// ══════════════════════════════════════════
+:host(.hub-nav-mobile-panel--offcanvas) {
+	.hub-nav-mobile-panel__content {
+		width: var(--hub-nav-mobile-width, 18rem);
+		height: 100%;
+		box-shadow: var(--hub-nav-mobile-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.18));
+		border-inline-end: 1px solid var(--hub-nav-mobile-border-color, rgba(0, 0, 0, 0.08));
+	}
+
+	// Slide directions
+	&.hub-nav-mobile-panel--start .hub-nav-mobile-panel__content {
+		top: 0;
+		left: 0;
+	}
+
+	&.hub-nav-mobile-panel--end .hub-nav-mobile-panel__content {
+		top: 0;
+		right: 0;
+	}
+
+	&.hub-nav-mobile-panel--top .hub-nav-mobile-panel__content {
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: auto;
+		max-height: 80vh;
+	}
+
+	&.hub-nav-mobile-panel--bottom .hub-nav-mobile-panel__content {
+		bottom: 0;
+		left: 0;
+		width: 100%;
+		height: auto;
+		max-height: 80vh;
+	}
+}
+
+// ══════════════════════════════════════════
+// Mode: Dropdown
+// ══════════════════════════════════════════
+:host(.hub-nav-mobile-panel--dropdown) {
+	.hub-nav-mobile-panel__content {
+		position: relative;
+		width: 100%;
+		border-top: var(--hub-nav-border-width, 1px) var(--hub-nav-border-style, solid)
+			var(--hub-nav-border-color, #dee2e6);
+	}
+}
+
+// ══════════════════════════════════════════
+// Mode: Fullscreen
+// ══════════════════════════════════════════
+:host(.hub-nav-mobile-panel--fullscreen) {
+	.hub-nav-mobile-panel__content {
+		inset: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	.hub-nav-mobile-panel__body {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		text-align: center;
+
+		hub-nav-item-list {
+			width: 100%;
+			max-width: 20rem;
+		}
+	}
+}
+
+// ══════════════════════════════════════════
+// Hidden state
+// ══════════════════════════════════════════
+:host:not(.hub-nav-mobile-panel--open) {
+	display: none;
+}
+
+// ── Reduced motion ──
+@media (prefers-reduced-motion: reduce) {
+	.hub-nav-mobile-panel__content {
+		transition: none;
+	}
+}

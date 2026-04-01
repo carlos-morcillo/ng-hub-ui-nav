@@ -1,0 +1,30 @@
+:host {
+	display: flex;
+	height: 100%;
+	align-items: stretch;
+
+	// Ensure all panels have uniform height
+	> hub-nav-panel {
+		height: 100%;
+	}
+}
+
+:host(.hub-nav-panel-container--left) {
+	flex-direction: row;
+}
+
+:host(.hub-nav-panel-container--right) {
+	flex-direction: row-reverse;
+}
+
+:host-context(.hub-nav--horizontal) {
+	display: block;
+	width: 100%;
+	height: auto;
+	min-width: 0;
+
+	> hub-nav-panel {
+		height: auto;
+		min-width: 0;
+	}
+}

@@ -1,0 +1,642 @@
+import {
+	Component,
+	ChangeDetectionStrategy,
+	input,
+	output,
+	inject,
+	computed,
+	contentChild,
+	effect,
+	OnInit,
+	OnDestroy,
+	ElementRef,
+	NgZone,
+	TemplateRef,
+} from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { NavigationEnd, Router } from '@angular/router';
+import { Subscription, filter } from 'rxjs';
+import { HubNavItem } from '../../models/nav-item.model';
+import { HubNavConfig } from '../../models/nav-config.model';
+import { HubNavPanelEvent } from '../../models/nav-events.model';
+import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.component';
+import { HubNavConfigService } from '../../services/nav-config.service';
+import { HubNavStateService } from '../../services/nav-state.service';
+import { HubNavStartDirective } from '../../directives/nav-start.directive';
+import { HubNavEndDirective } from '../../directives/nav-end.directive';
+import { HubNavItemTemplateDirective } from '../../directives/nav-item-template.directive';
+import { HubNavTogglerComponent } from '../nav-toggler/nav-toggler.component';
+import { HubNavMobilePanelComponent } from '../nav-mobile-panel/nav-mobile-panel.component';
+import { HubNavPanelContainerComponent } from '../nav-panel-container/nav-panel-container.component';
+
+/**
+ * Root navigation component. Renders a horizontal or vertical navigation bar
+ * with support for nested dropdowns, responsive collapsing, brand slot, panel
+ * drill-down navigation, and custom item templates.
+ *
+ * @example
+ * ```html
+ * <hub-nav [items]="menuItems" [config]="{ orientation: 'horizontal' }" />
+ * ```
+ */
+@Component({
+	selector: 'hub-nav',
+	standalone: true,
+	imports: [
+		NgTemplateOutlet,
+		HubNavItemListComponent,
+		HubNavTogglerComponent,
+		HubNavMobilePanelComponent,
+		HubNavPanelContainerComponent
+	],
+	providers: [HubNavStateService],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		class: 'hub-nav',
+		'[class.hub-nav--horizontal]': 'resolvedOrientation() === "horizontal"',
+		'[class.hub-nav--vertical]': 'resolvedOrientation() === "vertical"',
+		'[class.hub-nav--collapsed]': 'isCollapsed()',
+		'[class.hub-nav--sticky]': 'isStickyActive()',
+		'[class.hub-nav--fixed]': 'resolvedConfig().position === "fixed"',
+		'[class.hub-nav--sidebar-left]': 'resolvedConfig().sidebarSide === "left"',
+		'[class.hub-nav--sidebar-right]': 'resolvedConfig().sidebarSide === "right"',
+		'[style.width]': 'resolvedOrientation() === "vertical" ? "100%" : null',
+		'[style.align-self]': 'resolvedOrientation() === "vertical" ? "stretch" : null',
+		'[style.--hub-nav-sticky-top]': 'resolvedConfig().stickyTop',
+		'[style.display]': 'resolvedOrientation() === "vertical" ? "flex" : null',
+		'[style.flex-direction]': 'resolvedOrientation() === "vertical" ? "column" : null'
+	},
+	templateUrl: './nav.component.html',
+	styleUrl: './nav.component.scss'
+})
+export class HubNavComponent implements OnInit, OnDestroy {
+	/**
+	 * Last route path (without query/fragment) used to synchronize panel state.
+	 * Prevents unnecessary panel rebuilds on fragment-only navigations, e.g.
+	 * scroll-spy updates in documentation pages.
+	 */
+	private _lastSyncedPath = '';
+
+	/** Navigation items to render. */
+	readonly items = input.required<HubNavItem[]>();
+
+	/** Partial configuration overrides (merged with global defaults). */
+	readonly config = input<Partial<HubNavConfig>>({});
+
+	/** Additional CSS class for the nav container. */
+	readonly navClass = input<string>('');
+
+	/** Optional custom template for rendering nav items (via input binding). */
+	readonly itemTemplate = input<TemplateRef<unknown> | null>(null);
+
+	/**
+	 * When `true`, the component automatically opens the panels matching the
+	 * active router URL on initialization and on every subsequent navigation.
+	 * Useful for sidebar navigations where the URL should drive the open state.
+	 */
+	readonly autoOpenFromRoute = input<boolean>(false);
+
+	/** Start slot template projected via `hubNavStart` directive. */
+	private readonly startDirective = contentChild(HubNavStartDirective);
+
+	/** End slot template projected via `hubNavEnd` directive. */
+	private readonly endDirective = contentChild(HubNavEndDirective);
+
+	/** Item template projected via `hubNavItemTemplate` directive. */
+	private readonly itemTemplateDirective = contentChild(HubNavItemTemplateDirective);
+
+	/** Resolved start slot template (from directive content projection). */
+	readonly startTemplate = computed(() => this.startDirective()?.template ?? null);
+
+	/** Resolved end slot template (from directive content projection). */
+	readonly endTemplate = computed(() => this.endDirective()?.template ?? null);
+
+	/** Resolved item template: directive takes priority over input. */
+	readonly resolvedItemTemplate = computed(() => this.itemTemplateDirective()?.template ?? this.itemTemplate());
+
+	/** Start slot context. */
+	readonly startContext = computed(() => ({
+		collapsed: this.state.collapsed()
+	}));
+
+	/** End slot context. */
+	readonly endContext = computed(() => ({
+		collapsed: this.state.collapsed()
+	}));
+
+	/** Emitted when a link item is clicked. */
+	readonly itemClick = output<HubNavItem>();
+
+	/** Emitted when a dropdown opens. */
+	readonly dropdownOpen = output<HubNavItem>();
+
+	/** Emitted when a dropdown closes. */
+	readonly dropdownClose = output<HubNavItem>();
+
+	/** Emitted when the mobile panel toggles. */
+	readonly mobileToggle = output<boolean>();
+
+	/** Emitted when a panel is opened, drilled-down, or navigated back. */
+	readonly panelChange = output<HubNavPanelEvent>();
+
+	/** Global config service. */
+	private readonly configService = inject(HubNavConfigService);
+
+	/** Scoped state service (provided per component). */
+	readonly state = inject(HubNavStateService);
+
+	/** Host element reference for click-outside detection. */
+	private readonly elementRef = inject(ElementRef);
+
+	/** NgZone for running outside-click handler inside Angular. */
+	private readonly zone = inject(NgZone);
+
+	/** Angular router for URL-based panel initialization. */
+	private readonly router = inject(Router);
+
+	/** Whether component lifecycle initialization has completed. */
+	private initialized = false;
+
+	/** Last applied config signature used to prevent reactive no-op loops. */
+	private lastAppliedConfigSignature = '';
+
+	/** Last breakpoint-related signature used to avoid redundant listener rebinds. */
+	private lastBreakpointSignature = '';
+
+	/** Subscription for router NavigationEnd events. */
+	private routerSub?: Subscription;
+
+	/** Media query list for responsive breakpoint detection. */
+	private mediaQuery: MediaQueryList | null = null;
+
+	/** Bound handler for media query changes. */
+	private mediaQueryHandler = () => this.refreshCollapsedState();
+
+	/** Bound handler for window resize fallback. */
+	private resizeHandler = () => this.refreshCollapsedState();
+
+	/** Bound handler for document click events (click-outside). */
+	private documentClickHandler: ((event: MouseEvent) => void) | null = null;
+
+	/** Resolved config = global defaults + component overrides. */
+	readonly resolvedConfig = computed(() => this.configService.resolve(this.config()));
+
+	/** Shortcut to resolved orientation. */
+	readonly resolvedOrientation = computed(() => this.resolvedConfig().orientation);
+
+	/** Whether panels are currently active (panel stack is non-empty). */
+	readonly hasPanels = computed(() => this.state.panelCount() > 0);
+
+	/** The sidebar side from resolved config. */
+	readonly sidebarSide = computed(() => this.resolvedConfig().sidebarSide);
+
+	/** The panel width from resolved config. */
+	readonly panelWidth = computed(() => this.resolvedConfig().panelWidth);
+
+	/** Sync config to state service whenever it changes. */
+	private configEffect = effect(() => {
+		const resolvedConfig = this.resolvedConfig();
+		const nextConfigSignature = this.buildConfigSignature(resolvedConfig);
+		const nextBreakpointSignature = this.buildBreakpointSignature(resolvedConfig);
+
+		if (nextConfigSignature !== this.lastAppliedConfigSignature) {
+			this.lastAppliedConfigSignature = nextConfigSignature;
+			this.state.setConfig(resolvedConfig);
+		}
+
+		if (this.initialized && nextBreakpointSignature !== this.lastBreakpointSignature) {
+			this.lastBreakpointSignature = nextBreakpointSignature;
+			this.teardownBreakpointListener();
+			this.setupBreakpointListener();
+		}
+	});
+
+	/** ARIA label for the nav element. */
+	readonly ariaLabel = computed(() => this.resolvedConfig().ariaLabel);
+
+	/** Whether the viewport is below the collapse breakpoint. */
+	readonly isCollapsed = computed(() => this.state.collapsed());
+
+	/** Whether the mobile panel is open. */
+	readonly isMobileOpen = computed(() => this.state.mobileOpen());
+
+	/** Collapse mode from resolved config. */
+	readonly collapseMode = computed(() => this.resolvedConfig().collapseMode);
+
+	/** Offcanvas position from resolved config. */
+	readonly offcanvasPosition = computed(() => this.resolvedConfig().offcanvasPosition);
+
+	/**
+	 * Whether sticky positioning should be activated for the current layout.
+	 * Sticky mode is restricted to vertical navigation and also applies while
+	 * the nav is collapsed on mobile so the toggler row stays pinned.
+	 */
+	readonly isStickyActive = computed(
+		() => this.resolvedConfig().position === 'sticky' && this.resolvedOrientation() === 'vertical'
+	);
+
+	/** @inheritDoc */
+	ngOnInit(): void {
+		this.initialized = true;
+
+		// Ensure state receives the final resolved input config before any
+		// route-driven panel preloading runs.
+		const resolvedConfig = this.resolvedConfig();
+		this.lastAppliedConfigSignature = this.buildConfigSignature(resolvedConfig);
+		this.lastBreakpointSignature = this.buildBreakpointSignature(resolvedConfig);
+		this.state.setConfig(resolvedConfig);
+
+		this.setupBreakpointListener();
+		this.setupClickOutsideListener();
+
+		if (this.autoOpenFromRoute()) {
+			if (this.isCollapsed()) {
+				this.state.syncDropdownsWithRoute(this.items(), this.router.url);
+			} else {
+				this.openPanelsFromRoute(this.router.url);
+			}
+
+			this.routerSub = this.router.events
+				.pipe(filter((e) => e instanceof NavigationEnd))
+				.subscribe((e) => {
+					const nextUrl = (e as NavigationEnd).urlAfterRedirects;
+					const nextPath = this.extractPath(nextUrl);
+
+					if (this.isCollapsed()) {
+						this.state.syncDropdownsWithRoute(this.items(), nextUrl);
+						this._lastSyncedPath = nextPath;
+						return;
+					}
+
+					// Fragment-only transitions should not rebuild panel stacks.
+					if (nextPath === this._lastSyncedPath) {
+						return;
+					}
+
+					this.openPanelsFromRoute(nextUrl);
+				});
+		}
+	}
+
+	/** @inheritDoc */
+	ngOnDestroy(): void {
+		this.initialized = false;
+		this.teardownBreakpointListener();
+		this.teardownClickOutsideListener();
+		this.routerSub?.unsubscribe();
+	}
+
+	/**
+	 * Handles item click events bubbled up from the item list.
+	 *
+	 * @param payload - The clicked item and original DOM event.
+	 */
+	onItemClick(payload: { item: HubNavItem; event: Event }): void {
+		if (payload.item.route) {
+			this.itemClick.emit(payload.item);
+			// Keep parent sections open when the clicked item also owns children.
+			// This is required for responsive/mobile accordion behavior and for
+			// route-aware items that intentionally perform both actions.
+			if (!payload.item.children?.length) {
+				this.state.closeAllDropdowns();
+			}
+		}
+	}
+
+	/**
+	 * Toggles the mobile panel and emits the state change.
+	 */
+	onMobileToggle(): void {
+		this.state.toggleMobile();
+		if (this.state.mobileOpen() && this.autoOpenFromRoute()) {
+			this.state.syncDropdownsWithRoute(this.items(), this.router.url);
+		}
+		this.mobileToggle.emit(this.state.mobileOpen());
+	}
+
+	/**
+	 * Closes the mobile panel.
+	 */
+	onMobilePanelClose(): void {
+		this.state.setMobileOpen(false);
+		this.mobileToggle.emit(false);
+	}
+
+	/**
+	 * Handles dropdown toggle events bubbled up from the item list.
+	 * The toggle has already been performed in the item-list; this just
+	 * emits the appropriate output event.
+	 *
+	 * @param item - The dropdown item that was toggled.
+	 */
+	onDropdownToggle(item: HubNavItem): void {
+		if (this.state.isDropdownOpen(item.id)) {
+			this.dropdownOpen.emit(item);
+		} else {
+			this.dropdownClose.emit(item);
+		}
+	}
+
+	// ──────────────────────────────────────────────
+	// Panel event handlers
+	// ──────────────────────────────────────────────
+
+	/**
+	 * Opens a new panel for the given item's children, or drills down if max panels reached.
+	 * Focuses the first item in the newly opened/drilled panel.
+	 *
+	 * @param item - The item whose children should be displayed in a panel.
+	 */
+	onPanelOpen(item: HubNavItem): void {
+		const stackBefore = this.state.panelStack().length;
+		this.state.openPanel(item, this.items());
+		const stackAfter = this.state.panelStack().length;
+
+		const panelIndex = stackAfter - 1;
+		const action = stackAfter > stackBefore ? 'open' : 'drill-down';
+		this.panelChange.emit({ item, panelIndex, action });
+
+		// Focus the first item in the new/updated panel
+		this.focusPanelFirstItem(panelIndex);
+	}
+
+	/**
+	 * Closes a panel and all panels opened after it.
+	 * Returns focus to the previous panel or the main nav trigger.
+	 *
+	 * @param panelId - ID of the panel to close.
+	 */
+	onPanelClose(panelId: string): void {
+		const panel = this.state.getPanelById(panelId);
+		if (panel) {
+			const panelIndex = this.state.panelStack().indexOf(panel);
+			this.state.closePanel(panelId);
+			this.panelChange.emit({ item: panel.parentItem, panelIndex, action: 'close' });
+
+			// Return focus to previous panel or the main nav
+			this.returnFocusAfterPanelClose(panelIndex, panel.parentItem.id);
+		}
+	}
+
+	/**
+	 * Navigates back within a panel's drill-down history.
+	 * Focuses the first item after navigating back.
+	 *
+	 * @param panelId - ID of the panel to navigate back in.
+	 */
+	onPanelBack(panelId: string): void {
+		const panel = this.state.getPanelById(panelId);
+		if (panel) {
+			const panelIndex = this.state.panelStack().indexOf(panel);
+			this.state.navigateBackInPanel(panelId);
+			this.panelChange.emit({ item: panel.parentItem, panelIndex, action: 'drill-back' });
+
+			// Focus the first item in the panel after navigating back
+			this.focusPanelFirstItem(panelIndex);
+		}
+	}
+
+	/**
+	 * Focuses the first focusable item inside a panel at the given index.
+	 *
+	 * @param panelIndex - Zero-based index of the panel in the DOM.
+	 */
+	private focusPanelFirstItem(panelIndex: number): void {
+		requestAnimationFrame(() => {
+			const panels = this.elementRef.nativeElement.querySelectorAll('hub-nav-panel');
+			const targetPanel = panels[panelIndex] as HTMLElement | undefined;
+			if (targetPanel) {
+				const firstItem = targetPanel.querySelector(
+					'.hub-nav-item__link, .hub-nav-item__dropdown-toggle'
+				) as HTMLElement | null;
+				firstItem?.focus();
+			}
+		});
+	}
+
+	/**
+	 * Returns focus to the appropriate element after a panel is closed.
+	 * If a previous panel exists, focuses its trigger for the closed item.
+	 * Otherwise, returns focus to the main nav item-list.
+	 *
+	 * @param closedIndex - The index of the panel that was closed.
+	 * @param parentItemId - The ID of the parent item that triggered the closed panel.
+	 */
+	private returnFocusAfterPanelClose(closedIndex: number, parentItemId: string): void {
+		requestAnimationFrame(() => {
+			if (closedIndex > 0) {
+				// Focus the trigger in the previous panel
+				const panels = this.elementRef.nativeElement.querySelectorAll('hub-nav-panel');
+				const prevPanel = panels[closedIndex - 1] as HTMLElement | undefined;
+				if (prevPanel) {
+					const trigger = prevPanel.querySelector(
+						`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__link,` +
+						`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__dropdown-toggle`
+					) as HTMLElement | null;
+					trigger?.focus();
+					return;
+				}
+			}
+			// Fallback: focus the trigger in the main nav
+			const mainTrigger = this.elementRef.nativeElement.querySelector(
+				`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__link,` +
+				`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__dropdown-toggle`
+			) as HTMLElement | null;
+			mainTrigger?.focus();
+		});
+	}
+
+	/**
+	 * Sets up a `matchMedia` listener for the configured collapse breakpoint.
+	 */
+	private setupBreakpointListener(): void {
+		const bp = this.resolvedConfig().collapseBreakpoint;
+		if (bp <= 0 || typeof window === 'undefined') {
+			this.state.setCollapsed(false);
+			return;
+		}
+
+		this.mediaQuery = window.matchMedia(`(max-width: ${bp - 1}px)`);
+		this.refreshCollapsedState();
+		this.mediaQuery.addEventListener('change', this.mediaQueryHandler);
+		window.addEventListener('resize', this.resizeHandler, { passive: true });
+	}
+
+	/** Tears down the `matchMedia` listener. */
+	private teardownBreakpointListener(): void {
+		if (this.mediaQuery) {
+			this.mediaQuery.removeEventListener('change', this.mediaQueryHandler);
+			this.mediaQuery = null;
+		}
+
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('resize', this.resizeHandler);
+		}
+	}
+
+	/**
+	 * Registers a document click listener that closes dropdowns on outside clicks.
+	 * Panel drill-down mode panels are NOT closed by outside clicks.
+	 */
+	private setupClickOutsideListener(): void {
+		if (typeof document === 'undefined') {
+			return;
+		}
+
+		this.documentClickHandler = (event: MouseEvent) => {
+			const target = event.target as HTMLElement;
+			if (!this.elementRef.nativeElement.contains(target)) {
+				this.zone.run(() => {
+					// Close dropdowns/flyouts on outside click
+					this.state.closeAllDropdowns();
+					// DO NOT close panels — they should only close via explicit user action (back/close buttons)
+				});
+			}
+		};
+
+		document.addEventListener('click', this.documentClickHandler);
+	}
+
+	/** Removes the document click listener. */
+	private teardownClickOutsideListener(): void {
+		if (this.documentClickHandler) {
+			document.removeEventListener('click', this.documentClickHandler);
+			this.documentClickHandler = null;
+		}
+	}
+
+	/**
+	 * Callback invoked when the viewport crosses the collapse breakpoint.
+	 *
+	 * @param belowBreakpoint - `true` if the viewport is now below the breakpoint.
+	 */
+	private onBreakpointChange(belowBreakpoint: boolean): void {
+		if (belowBreakpoint === this.isCollapsed()) {
+			return;
+		}
+		this.state.setCollapsed(belowBreakpoint);
+		if (!belowBreakpoint) {
+			this.state.closeAllDropdowns();
+			this.state.closeAllPanels();
+			this.mobileToggle.emit(false);
+		}
+	}
+
+	/**
+	 * Recomputes the collapsed state from the current viewport width.
+	 * This complements `matchMedia` events, which can become unreliable in
+	 * some browser/devtools combinations when the viewport is resized or
+	 * docked without emitting the expected media-query change sequence.
+	 */
+	private refreshCollapsedState(): void {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		const bp = this.resolvedConfig().collapseBreakpoint;
+		if (bp <= 0) {
+			this.onBreakpointChange(false);
+			return;
+		}
+
+		this.onBreakpointChange(window.innerWidth < bp);
+	}
+
+	/**
+	 * Parses the given URL and opens the panels that correspond to the active route.
+	 *
+	 * The algorithm:
+	 * 1. Extract the path without fragment/query: `/calendar/examples` → `['calendar', 'examples']`
+	 * 2. Find the root item whose id matches the first segment.
+	 * 3. Open a panel for that root item (closes any existing panels first).
+	 * 4. If a second segment exists and matches a child item that has its own
+	 *    children (e.g. the "Examples" dropdown), open a second panel for it.
+	 *
+	 * @param url - The full URL including optional fragment, e.g. `/calendar/examples#cal-basic`.
+	 */
+	private openPanelsFromRoute(url: string): void {
+		// Strip query string and fragment
+		const path = url.split('?')[0].split('#')[0];
+		this._lastSyncedPath = path;
+		const segments = path.split('/').filter(Boolean);
+
+		if (segments.length === 0) {
+			return;
+		}
+
+		const rootItems = this.items();
+		const libraryId = segments[0];
+
+		// Find the matching root nav item
+		const rootItem = rootItems.find((item) => item.id === libraryId);
+		if (!rootItem?.children?.length) {
+			return;
+		}
+
+		// Always rebuild route-driven panel state from scratch to avoid stale
+		// panel stacks when visibility limits or orientation changed.
+		this.state.closeAllPanels();
+		this.state.openPanel(rootItem, rootItems);
+
+		// If a second path segment exists, find and open the matching child panel
+		if (segments.length > 1) {
+			const sectionSegment = segments[1];
+			const sectionItem = rootItem.children.find(
+				(child) => child.children?.length && child.route?.toString().split('/').pop() === sectionSegment
+			);
+			if (sectionItem) {
+				// Keep root-level replacement logic scoped to true root items.
+				// Passing rootItems here preserves drill-down behavior when
+				// `panelMaxVisible` forces nested levels to replace the last panel.
+				this.state.openPanel(sectionItem, rootItems);
+			}
+		}
+	}
+
+	/**
+	 * Extracts the path part from a URL-like string, removing query and fragment.
+	 *
+	 * @param url - Router URL.
+	 * @returns Normalized path for route-state comparisons.
+	 */
+	private extractPath(url: string): string {
+		return url.split('?')[0].split('#')[0];
+	}
+
+	/**
+	 * Builds a stable signature for the effective nav config so repeated
+	 * reactivity passes with identical values do not trigger work.
+	 *
+	 * @param config - Effective nav config.
+	 * @returns Stable string signature.
+	 */
+	private buildConfigSignature(config: HubNavConfig): string {
+		return JSON.stringify({
+			orientation: config.orientation,
+			verticalExpandMode: config.verticalExpandMode,
+			dropdownTrigger: config.dropdownTrigger,
+			position: config.position,
+			stickyTop: config.stickyTop,
+			collapseMode: config.collapseMode,
+			collapseBreakpoint: config.collapseBreakpoint,
+			offcanvasPosition: config.offcanvasPosition,
+			ariaLabel: config.ariaLabel,
+			panelMaxVisible: config.panelMaxVisible,
+			sidebarSide: config.sidebarSide,
+			panelWidth: config.panelWidth
+		});
+	}
+
+	/**
+	 * Builds a stable signature for breakpoint listener inputs.
+	 *
+	 * @param config - Effective nav config.
+	 * @returns Stable breakpoint signature.
+	 */
+	private buildBreakpointSignature(config: HubNavConfig): string {
+		return JSON.stringify({
+			collapseBreakpoint: config.collapseBreakpoint,
+			orientation: config.orientation
+		});
+	}
+}

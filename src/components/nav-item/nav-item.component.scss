@@ -1,0 +1,233 @@
+:host {
+	display: block;
+	position: relative;
+}
+
+// In forced accordion/mobile lists, items must always consume the full row
+// even if the root nav orientation is horizontal.
+:host-context(.hub-nav-item-list--force-accordion) {
+	display: block;
+	width: 100%;
+}
+
+// ── Shared link / button base ──
+.hub-nav-item__link {
+	display: flex;
+	align-items: center;
+	gap: var(--hub-nav-icon-gap, 0.5rem);
+	width: 100%;
+	padding: var(--hub-nav-item-padding-y, 0.5rem) var(--hub-nav-item-padding-x, 1rem);
+	font-size: var(--hub-nav-item-font-size, 1rem);
+	font-weight: var(--hub-nav-item-font-weight, 400);
+	color: var(--hub-nav-item-color, #212529);
+	text-decoration: none;
+	background: none;
+	border: 0;
+	border-radius: var(--hub-nav-item-border-radius, 0.25rem);
+	cursor: pointer;
+	transition: background-color var(--hub-nav-item-transition, 150ms ease),
+		color var(--hub-nav-item-transition, 150ms ease);
+	white-space: nowrap;
+	font-family: inherit;
+	line-height: 1.5;
+	text-align: start;
+
+	&:hover:not(.hub-nav-item__link--disabled) {
+		background-color: var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04));
+		color: var(--hub-nav-item-hover-color, #0d6efd);
+	}
+
+	&--active {
+		background-color: var(--hub-nav-item-active-bg, #0d6efd);
+		color: var(--hub-nav-item-active-color, #fff);
+		font-weight: var(--hub-nav-item-active-font-weight, 600);
+	}
+
+	&--disabled {
+		color: var(--hub-nav-item-disabled-color, #6c757d);
+		opacity: var(--hub-nav-item-disabled-opacity, 0.65);
+		pointer-events: none;
+		cursor: default;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--hub-sys-focus-ring-color, rgba(13, 110, 253, 0.25));
+		outline-offset: -2px;
+	}
+}
+
+// ── Compound dropdown row (route + caret split actions) ──
+.hub-nav-item__compound {
+	display: flex;
+	align-items: stretch;
+	width: 100%;
+}
+
+.hub-nav-item__link--split {
+	flex: 1 1 auto;
+	min-width: 0;
+	border-start-end-radius: 0;
+	border-end-end-radius: 0;
+}
+
+.hub-nav-item__caret-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	min-width: calc(var(--hub-nav-item-font-size, 1rem) * 2.5);
+	padding: 0 var(--hub-nav-item-padding-x, 1rem);
+	color: var(--hub-nav-item-color, #212529);
+	background: none;
+	border: 0;
+	border-start-start-radius: 0;
+	border-end-start-radius: 0;
+	border-start-end-radius: var(--hub-nav-item-border-radius, 0.25rem);
+	border-end-end-radius: var(--hub-nav-item-border-radius, 0.25rem);
+	cursor: pointer;
+	transition: background-color var(--hub-nav-item-transition, 150ms ease),
+		color var(--hub-nav-item-transition, 150ms ease);
+
+	&:hover:not(.hub-nav-item__caret-button--disabled) {
+		background-color: var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04));
+		color: var(--hub-nav-item-hover-color, #0d6efd);
+	}
+
+	&--active {
+		background-color: var(--hub-nav-item-active-bg, #0d6efd);
+		color: var(--hub-nav-item-active-color, #fff);
+	}
+
+	&--disabled {
+		color: var(--hub-nav-item-disabled-color, #6c757d);
+		opacity: var(--hub-nav-item-disabled-opacity, 0.65);
+		cursor: default;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--hub-sys-focus-ring-color, rgba(13, 110, 253, 0.25));
+		outline-offset: -2px;
+	}
+}
+
+.hub-nav-item__caret-button--expanded:not(.hub-nav-item__caret-button--active) {
+	background-color: var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04));
+	color: var(--hub-nav-item-hover-color, #0d6efd);
+}
+
+// ── Icon ──
+.hub-nav-item__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--hub-nav-icon-size, 1.25rem);
+	height: var(--hub-nav-icon-size, 1.25rem);
+	flex-shrink: 0;
+}
+
+// ── Label ──
+.hub-nav-item__label {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+// ── Badge ──
+.hub-nav-item__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--hub-nav-badge-padding-y, 0.25em) var(--hub-nav-badge-padding-x, 0.5em);
+	font-size: var(--hub-nav-badge-font-size, 0.75rem);
+	font-weight: 600;
+	line-height: 1;
+	color: var(--hub-nav-badge-color, #fff);
+	background-color: var(--hub-nav-badge-bg, #dc3545);
+	border-radius: var(--hub-nav-badge-border-radius, 50rem);
+	flex-shrink: 0;
+}
+
+// ── Caret (dropdown indicator) ──
+.hub-nav-item__caret {
+	display: inline-block;
+	width: 0;
+	height: 0;
+	vertical-align: middle;
+	border-top: var(--hub-nav-caret-size, 0.3rem) solid var(--hub-nav-caret-color, currentColor);
+	border-right: var(--hub-nav-caret-size, 0.3rem) solid transparent;
+	border-left: var(--hub-nav-caret-size, 0.3rem) solid transparent;
+	transition: transform var(--hub-nav-item-transition, 150ms ease);
+	flex-shrink: 0;
+}
+
+// Rotate caret when expanded
+:host(.hub-nav-item--expanded) .hub-nav-item__caret {
+	transform: rotate(180deg);
+}
+
+// Keep visual feedback for expanded sections even when caret is hidden (panel mode).
+:host(.hub-nav-item--expanded) .hub-nav-item__link:not(.hub-nav-item__link--active) {
+	background-color: var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04));
+	color: var(--hub-nav-item-hover-color, #0d6efd);
+	font-weight: var(--hub-nav-item-active-font-weight, 600);
+}
+
+// ── Header (non-interactive section label) ──
+.hub-nav-item__header {
+	display: block;
+	padding: var(--hub-nav-header-padding-y, 0.25rem) var(--hub-nav-header-padding-x, 1rem);
+	margin-top: var(--hub-nav-header-margin-top, 0.75rem);
+	font-size: var(--hub-nav-header-font-size, 0.875rem);
+	font-weight: var(--hub-nav-header-font-weight, 600);
+	color: var(--hub-nav-header-color, #6c757d);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	cursor: default;
+	white-space: nowrap;
+}
+
+:host-context(.hub-nav--horizontal) .hub-nav-item__header {
+	display: inline-flex;
+	align-items: center;
+	margin-top: 0;
+	margin-inline-start: 0;
+	padding-block: var(--hub-nav-header-padding-y, 0.25rem);
+	padding-inline-end: var(--hub-nav-header-padding-x, 1rem);
+	padding-inline-start: var(--hub-nav-header-horizontal-padding-inline-start, 2rem);
+}
+
+:host-context(.hub-nav-dropdown) .hub-nav-item__header,
+:host-context(.hub-nav-accordion) .hub-nav-item__header,
+:host-context(.hub-nav-panel__body) .hub-nav-item__header,
+:host-context(.hub-nav-mobile-panel__body) .hub-nav-item__header {
+	display: block;
+	margin-top: var(--hub-nav-header-margin-top, 0.75rem);
+	margin-inline-start: 0;
+}
+
+// ── Horizontal mode: root items are inline ──
+:host-context(.hub-nav--horizontal) {
+	display: inline-flex;
+
+	.hub-nav-item__link {
+		white-space: nowrap;
+	}
+
+	// Sub-dropdown caret points right
+	&:host-context(.hub-nav-dropdown) .hub-nav-item__caret {
+		border-top: var(--hub-nav-caret-size, 0.3rem) solid transparent;
+		border-bottom: var(--hub-nav-caret-size, 0.3rem) solid transparent;
+		border-left: var(--hub-nav-caret-size, 0.3rem) solid var(--hub-nav-caret-color, currentColor);
+		border-right: 0;
+	}
+}
+
+// Items inside dropdowns must be full-width blocks, even in horizontal mode
+:host-context(.hub-nav-dropdown) {
+	display: block;
+}
+
+// Forced accordion mode wins over horizontal inline root item styling.
+:host-context(.hub-nav-item-list--force-accordion) .hub-nav-item__link {
+	width: 100%;
+}

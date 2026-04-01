@@ -1,0 +1,258 @@
+# ng-hub-ui-nav
+
+[![npm version](https://img.shields.io/npm/v/ng-hub-ui-nav.svg)](https://www.npmjs.com/package/ng-hub-ui-nav)
+[![license](https://img.shields.io/npm/l/ng-hub-ui-nav.svg)](https://github.com/carlos-morcillo/ng-hub-ui-nav/blob/main/LICENSE)
+
+A flexible, accessible, and highly customizable navigation component for Angular 21+. It supports horizontal menus, vertical sidebars, mobile collapse modes, stacked drill-down panels, projected start/end slots, and scroll-spy integration.
+
+> [!IMPORTANT]
+> Version `21.1.0` targets Angular 21 and follows the signal-first architecture used across `ng-hub-ui`.
+
+## Library Family `ng-hub-ui`
+
+This library is part of the **ng-hub-ui** ecosystem:
+
+- [**ng-hub-ui-accordion**](https://www.npmjs.com/package/ng-hub-ui-accordion)
+- [**ng-hub-ui-avatar**](https://www.npmjs.com/package/ng-hub-ui-avatar)
+- [**ng-hub-ui-board**](https://www.npmjs.com/package/ng-hub-ui-board)
+- [**ng-hub-ui-breadcrumbs**](https://www.npmjs.com/package/ng-hub-ui-breadcrumbs)
+- [**ng-hub-ui-calendar**](https://www.npmjs.com/package/ng-hub-ui-calendar)
+- [**ng-hub-ui-modal**](https://www.npmjs.com/package/ng-hub-ui-modal)
+- [**ng-hub-ui-nav**](https://www.npmjs.com/package/ng-hub-ui-nav)
+- [**ng-hub-ui-paginable**](https://www.npmjs.com/package/ng-hub-ui-paginable)
+- [**ng-hub-ui-portal**](https://www.npmjs.com/package/ng-hub-ui-portal)
+- [**ng-hub-ui-stepper**](https://www.npmjs.com/package/ng-hub-ui-stepper)
+- [**ng-hub-ui-utils**](https://www.npmjs.com/package/ng-hub-ui-utils)
+
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Examples](#examples)
+- [API Reference](#api-reference)
+- [Styling](#styling)
+- [Changelog](#changelog)
+- [Contribution](#contribution)
+- [Support](#support)
+- [Contributors](#contributors)
+- [License](#license)
+
+## Features
+
+- Horizontal and vertical navigation layouts.
+- Responsive collapse modes: `offcanvas`, `dropdown`, and `fullscreen`.
+- Vertical child expansion modes: `accordion`, `flyout`, and `panel`.
+- Stacked panel drill-down navigation with configurable visible panel count.
+- Projected `hubNavStart` and `hubNavEnd` slots.
+- Custom item rendering with `hubNavItemTemplate`.
+- Router-aware active states with fragment and query param support.
+- Scroll-spy helpers for documentation pages and one-page layouts.
+- Sticky vertical navigation support.
+- Full CSS variable theming via `--hub-nav-*` tokens.
+
+## Installation
+
+```bash
+npm install ng-hub-ui-nav
+```
+
+## Quick Start
+
+```typescript
+import { Component } from '@angular/core';
+import { HubNavComponent, HubNavItem } from 'ng-hub-ui-nav';
+
+@Component({
+	standalone: true,
+	imports: [HubNavComponent],
+	template: `
+		<hub-nav
+			[items]="items"
+			[config]="{
+				orientation: 'horizontal',
+				dropdownTrigger: 'click'
+			}"
+		/>
+	`
+})
+export class ExampleComponent {
+	readonly items: HubNavItem[] = [
+		{ id: 'home', label: 'Home', type: 'link', route: '/' },
+		{
+			id: 'components',
+			label: 'Components',
+			type: 'dropdown',
+			children: [
+				{ id: 'accordion', label: 'Accordion', type: 'link', route: '/accordion' },
+				{ id: 'calendar', label: 'Calendar', type: 'link', route: '/calendar' }
+			]
+		}
+	];
+}
+```
+
+## Examples
+
+### Vertical Sidebar with Panels
+
+```html
+<hub-nav
+	[items]="items"
+	[config]="{
+		orientation: 'vertical',
+		verticalExpandMode: 'panel',
+		panelMaxVisible: 2,
+		panelWidth: '18rem',
+		position: 'sticky',
+		stickyTop: '1rem'
+	}"
+/>
+```
+
+### Start and End Slots
+
+```html
+<hub-nav [items]="items" [config]="{ orientation: 'horizontal' }">
+	<ng-template hubNavStart let-collapsed="collapsed">
+		<strong>My App</strong>
+	</ng-template>
+
+	<ng-template hubNavEnd>
+		<button type="button">Profile</button>
+	</ng-template>
+</hub-nav>
+```
+
+### Scroll Spy
+
+```html
+<section
+	hubNavScrollSpy
+	(activeSectionChange)="activeSection = $event"
+>
+	<section id="overview" hubNavScrollSpySection>...</section>
+	<section id="api" hubNavScrollSpySection>...</section>
+</section>
+```
+
+## API Reference
+
+### `HubNavComponent`
+
+#### Inputs
+
+| Input | Type | Default | Description |
+|---|---|---|---|
+| `items` | `HubNavItem[]` | required | Navigation tree to render. |
+| `config` | `Partial<HubNavConfig>` | `{}` | Per-instance config merged with global defaults. |
+| `navClass` | `string` | `''` | Additional class applied to the internal `<nav>`. |
+| `itemTemplate` | `TemplateRef<unknown> \| null` | `null` | Optional custom item template. |
+| `autoOpenFromRoute` | `boolean` | `false` | Opens matching dropdowns/panels from the current route. |
+
+#### Outputs
+
+| Output | Type | Description |
+|---|---|---|
+| `itemClick` | `OutputEmitterRef<HubNavItem>` | Emitted when a link item is activated. |
+| `dropdownOpen` | `OutputEmitterRef<HubNavItem>` | Emitted when a dropdown opens. |
+| `dropdownClose` | `OutputEmitterRef<HubNavItem>` | Emitted when a dropdown closes. |
+| `mobileToggle` | `OutputEmitterRef<boolean>` | Emitted when the responsive mobile panel opens or closes. |
+| `panelChange` | `OutputEmitterRef<HubNavPanelEvent>` | Emitted when a panel opens, closes, drills down, or drills back. |
+
+### `HubNavConfig`
+
+```typescript
+interface HubNavConfig {
+	orientation: 'horizontal' | 'vertical';
+	verticalExpandMode: 'accordion' | 'flyout' | 'panel';
+	dropdownTrigger: 'hover' | 'click' | 'both';
+	position: 'static' | 'sticky' | 'fixed';
+	stickyTop: string;
+	collapseMode: 'offcanvas' | 'dropdown' | 'fullscreen';
+	collapseBreakpoint: number;
+	offcanvasPosition: 'start' | 'end' | 'top' | 'bottom';
+	ariaLabel: string;
+	panelMaxVisible: number;
+	sidebarSide: 'left' | 'right';
+	panelWidth: string;
+}
+```
+
+### `HubNavItem`
+
+```typescript
+interface HubNavItem {
+	id: string;
+	label: string;
+	type: 'link' | 'dropdown' | 'header' | 'separator' | 'custom';
+	icon?: string;
+	route?: string | string[];
+	queryParams?: Record<string, string>;
+	fragment?: string;
+	routerLinkActiveOptions?: { exact: boolean };
+	children?: HubNavItem[];
+	badge?: string;
+	badgeClass?: string;
+	disabled?: boolean;
+	cssClass?: string;
+	data?: unknown;
+	expandMode?: 'accordion' | 'flyout' | 'panel';
+}
+```
+
+### Directives
+
+- `hubNavStart`: projects content into the start slot.
+- `hubNavEnd`: projects content into the end slot.
+- `hubNavItemTemplate`: overrides item rendering.
+- `hubNavScrollSpy`: tracks visible sections in a scroll container.
+- `hubNavScrollSpySection`: marks a section as spy-trackable.
+
+## Styling
+
+The component exposes a complete set of `--hub-nav-*` tokens. See the full reference in:
+
+- [CSS Variables Reference](docs/css-variables-reference.md)
+
+Example:
+
+```css
+.my-sidebar {
+	--hub-nav-panel-width: 18rem;
+	--hub-nav-item-active-bg: #0d6efd;
+	--hub-nav-item-active-color: #ffffff;
+	--hub-nav-dropdown-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.16);
+}
+```
+
+## Changelog
+
+See the full release history in [CHANGELOG.md](CHANGELOG.md).
+
+If you are upgrading across versions, also review [BREAKING_CHANGES.md](BREAKING_CHANGES.md).
+
+## Contribution
+
+Issues, discussions, and pull requests are welcome.
+
+If you want to contribute:
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Keep API changes documented in the README and changelog.
+4. Open a pull request with a clear description of the change.
+
+## Support
+
+If this library helps your projects, you can support its maintenance here:
+
+- [Buy Me a Coffee](https://buymeacoffee.com/carlosmorcillo)
+
+## Contributors
+
+Created and maintained by [Carlos Morcillo](https://github.com/carlos-morcillo).
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

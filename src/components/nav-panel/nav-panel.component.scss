@@ -1,0 +1,208 @@
+:host {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-width: 0;
+	flex-shrink: 0;
+	position: relative;
+	z-index: var(--hub-nav-panel-z-index, 100);
+	background: var(--hub-nav-panel-bg);
+	color: var(--hub-nav-panel-color);
+	border-inline-start: var(--hub-nav-panel-border-width) solid var(--hub-nav-panel-border-color);
+	box-shadow: var(--hub-nav-panel-shadow);
+	overflow: hidden;
+}
+
+/*
+ * Horizontal mode turns the panel into an inline second row:
+ * - Header occupies the logical start side.
+ * - Body takes the remaining width and scrolls horizontally if needed.
+ *
+ * The host width is forced to 100% to override the inline `[style.width]`
+ * binding used by vertical stacked panels.
+ */
+:host-context(.hub-nav--horizontal) {
+	width: 100% !important;
+	height: auto;
+	min-height: 0;
+	flex-direction: row;
+	border-inline-start: none;
+	border-inline-end: none;
+	border-top: var(--hub-nav-panel-border-width) solid var(--hub-nav-panel-border-color);
+	box-shadow: none;
+	animation: none;
+}
+
+.hub-nav-panel__header {
+	display: flex;
+	align-items: center;
+	gap: var(--hub-ref-space-2, 0.5rem);
+	height: var(--hub-nav-panel-header-height);
+	min-height: var(--hub-nav-panel-header-height);
+	padding: 0 var(--hub-nav-panel-header-padding-x);
+	background: var(--hub-nav-panel-header-bg);
+	border-bottom: var(--hub-nav-panel-border-width, 1px) solid var(--hub-nav-panel-header-border-color);
+	font-size: var(--hub-nav-panel-header-font-size);
+	font-weight: var(--hub-nav-panel-header-font-weight);
+}
+
+:host-context(.hub-nav--horizontal) .hub-nav-panel__header {
+	flex: 0 0 var(--hub-nav-panel-width, 16rem);
+	height: auto;
+	min-height: 0;
+	max-height: none;
+	border-bottom: none;
+	border-inline-end: var(--hub-nav-panel-border-width, 1px) solid var(--hub-nav-panel-header-border-color);
+}
+
+/* In RTL, keep header at logical right side for horizontal layout. */
+:host-context(.hub-nav--horizontal):host-context([dir='rtl']) .hub-nav-panel__header {
+	order: 2;
+	border-inline-end: none;
+	border-inline-start: var(--hub-nav-panel-border-width, 1px) solid var(--hub-nav-panel-header-border-color);
+}
+
+.hub-nav-panel__title {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hub-nav-panel__back,
+.hub-nav-panel__close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--hub-nav-panel-back-size);
+	height: var(--hub-nav-panel-back-size);
+	padding: 0;
+	border: none;
+	border-radius: var(--hub-nav-item-border-radius, 0.25rem);
+	background: none;
+	color: var(--hub-nav-panel-back-color);
+	font-size: 1.25rem;
+	cursor: pointer;
+	transition: background-color var(--hub-nav-item-transition, 150ms ease);
+	flex-shrink: 0;
+
+	&:hover {
+		background: var(--hub-nav-panel-back-hover-bg);
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--hub-sys-focus-ring-color, rgba(13, 110, 253, 0.25));
+		outline-offset: -2px;
+	}
+}
+
+.hub-nav-panel__close {
+	margin-inline-start: auto;
+}
+
+.hub-nav-panel__body {
+	flex: 1;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding-block: var(--hub-nav-vertical-panel-padding-block, 0);
+	padding-inline: var(--hub-nav-vertical-panel-padding-inline, 0.5rem);
+	-ms-overflow-style: none;
+	scrollbar-width: var(--hub-nav-scrollbar-width, none);
+	scrollbar-color: var(--hub-nav-scrollbar-color, transparent transparent);
+
+	&::-webkit-scrollbar {
+		width: var(--hub-nav-scrollbar-webkit-size, 0);
+		height: var(--hub-nav-scrollbar-webkit-size, 0);
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--hub-nav-scrollbar-thumb-color, transparent);
+		border-radius: var(--hub-nav-scrollbar-thumb-radius, 999px);
+	}
+
+	&::-webkit-scrollbar-track {
+		background-color: var(--hub-nav-scrollbar-track-color, transparent);
+	}
+}
+
+:host-context(.hub-nav--horizontal) .hub-nav-panel__body {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	min-width: 0;
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: var(--hub-nav-horizontal-panel-padding-y, 0.5rem) var(--hub-nav-horizontal-panel-padding-x, 0);
+}
+
+:host-context(.hub-nav--horizontal) .hub-nav-panel__body > hub-nav-item-list {
+	flex: 0 0 auto;
+	width: max-content;
+	min-width: max-content;
+	/*
+	 * Center when it fits; snap to start when it overflows to keep the first
+	 * item and back header fully visible at scroll position 0.
+	 */
+	margin-inline: auto;
+}
+
+/* Slide-in animation */
+:host {
+	animation: hubNavPanelEnter 300ms ease forwards;
+}
+
+@keyframes hubNavPanelEnter {
+	from {
+		opacity: 0;
+		transform: translateX(-1rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+/* Right sidebar: panels enter from the right */
+:host-context(.hub-nav-panel-container--right) {
+	border-inline-start: none;
+	border-inline-end: var(--hub-nav-panel-border-width) solid var(--hub-nav-panel-border-color);
+
+	animation-name: hubNavPanelEnterRight;
+}
+
+@keyframes hubNavPanelEnterRight {
+	from {
+		opacity: 0;
+		transform: translateX(1rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+/* Drill-down content transition */
+:host(.hub-nav-panel--drill-down) .hub-nav-panel__body {
+	animation: hubNavPanelDrillDown 200ms ease forwards;
+}
+
+@keyframes hubNavPanelDrillDown {
+	from {
+		opacity: 0;
+		transform: translateX(0.5rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:host {
+		animation: none;
+	}
+
+	:host(.hub-nav-panel--drill-down) .hub-nav-panel__body {
+		animation: none;
+	}
+}
