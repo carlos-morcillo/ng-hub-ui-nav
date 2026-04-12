@@ -29,7 +29,8 @@ export class HubNavStateService {
 		ariaLabel: 'Navigation',
 		panelMaxVisible: 3,
 		sidebarSide: 'left',
-		panelWidth: '16rem'
+		panelWidth: '16rem',
+		dropdownRenderMode: 'inline'
 	});
 
 	/** Set of dropdown item IDs that are currently open. */

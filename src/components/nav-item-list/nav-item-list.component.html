@@ -3,6 +3,7 @@
 		<hub-nav-separator />
 	} @else {
 		<div
+			#itemWrapper
 			class="hub-nav-item-wrapper"
 			[class.hub-nav-item-wrapper--has-dropdown]="hasChildren(item)"
 			(mouseenter)="onItemMouseEnter(item)"
@@ -19,8 +20,25 @@
 				(toggleDropdown)="onDropdownToggle($event)"
 			/>
 
+			<ng-template #overlayDropdownTemplate>
+				<div class="hub-nav-dropdown" role="menu">
+					<hub-nav-item-list
+						[items]="item.children ?? []"
+						[depth]="depth() + 1"
+						[itemTemplate]="itemTemplate()"
+						[forceAccordionMode]="forceAccordionMode()"
+						[dropdownRenderMode]="dropdownRenderMode()"
+						[overlayOwnerClass]="overlayOwnerClass()"
+						[overlayOrientationClass]="overlayOrientationClass()"
+						(itemClick)="onItemClick($event)"
+						(dropdownToggle)="dropdownToggle.emit($event)"
+						(panelOpen)="panelOpen.emit($event)"
+					/>
+				</div>
+			</ng-template>
+
 			<!-- Children: accordion (inline), flyout/dropdown (positioned), or panel (external) -->
-			@if (hasChildren(item) && isExpanded(item) && getItemExpandMode(item) !== 'panel') {
+			@if (hasChildren(item) && isExpanded(item) && getItemExpandMode(item) !== 'panel' && !shouldRenderDropdownInOverlay(item)) {
 				@if (getItemExpandMode(item) === 'accordion') {
 					<!-- Accordion: children expand inline with indentation -->
 					<div
@@ -33,6 +51,9 @@
 							[depth]="depth() + 1"
 							[itemTemplate]="itemTemplate()"
 							[forceAccordionMode]="forceAccordionMode()"
+							[dropdownRenderMode]="dropdownRenderMode()"
+							[overlayOwnerClass]="overlayOwnerClass()"
+							[overlayOrientationClass]="overlayOrientationClass()"
 							(itemClick)="onItemClick($event)"
 							(dropdownToggle)="dropdownToggle.emit($event)"
 							(panelOpen)="panelOpen.emit($event)"
@@ -46,6 +67,9 @@
 							[depth]="depth() + 1"
 							[itemTemplate]="itemTemplate()"
 							[forceAccordionMode]="forceAccordionMode()"
+							[dropdownRenderMode]="dropdownRenderMode()"
+							[overlayOwnerClass]="overlayOwnerClass()"
+							[overlayOrientationClass]="overlayOrientationClass()"
 							(itemClick)="onItemClick($event)"
 							(dropdownToggle)="dropdownToggle.emit($event)"
 							(panelOpen)="panelOpen.emit($event)"

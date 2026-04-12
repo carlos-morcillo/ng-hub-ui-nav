@@ -93,6 +93,17 @@ export interface HubNavConfig {
 	 * @default '16rem'
 	 */
 	panelWidth: string;
+
+	/**
+	 * Rendering strategy for dropdown and flyout menus outside panel mode.
+	 * - `inline`: Render submenus inside the nav DOM tree.
+	 * - `overlay`: Render submenus in a body-level overlay to avoid clipping.
+	 *
+	 * Panel drill-down mode is not affected by this option.
+	 *
+	 * @default 'inline'
+	 */
+	dropdownRenderMode: HubNavDropdownRenderMode;
 }
 
 /** Orientation of the navigation layout. */
@@ -106,6 +117,9 @@ export type HubNavSidebarSide = 'left' | 'right';
 
 /** Trigger mechanism for dropdown menus. */
 export type HubNavDropdownTrigger = 'hover' | 'click' | 'both';
+
+/** Rendering strategy for dropdown and flyout menus. */
+export type HubNavDropdownRenderMode = 'inline' | 'overlay';
 
 /** CSS positioning strategy. */
 export type HubNavPosition = 'static' | 'sticky' | 'fixed';

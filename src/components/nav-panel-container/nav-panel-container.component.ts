@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, output, TemplateRef } from '@angular/core';
 import { HubNavItem } from '../../models/nav-item.model';
-import { HubNavSidebarSide } from '../../models/nav-config.model';
+import { HubNavDropdownRenderMode, HubNavSidebarSide } from '../../models/nav-config.model';
 import { HubNavPanelState } from '../../models/nav-panel-state.model';
 import { HubNavPanelComponent } from '../nav-panel/nav-panel.component';
 
@@ -35,6 +35,15 @@ export class HubNavPanelContainerComponent {
 
 	/** Optional custom template for rendering item content. */
 	readonly itemTemplate = input<TemplateRef<unknown> | null>(null);
+
+	/** Dropdown rendering mode forwarded to panel item lists. */
+	readonly dropdownRenderMode = input<HubNavDropdownRenderMode>('inline');
+
+	/** Unique owner class used to scope overlay dropdowns. */
+	readonly overlayOwnerClass = input<string>('');
+
+	/** Orientation class forwarded to overlay dropdowns inside panels. */
+	readonly overlayOrientationClass = input<'hub-nav--horizontal' | 'hub-nav--vertical'>('hub-nav--vertical');
 
 	/**
 	 * When true, the first panel hides its header while it is not in drill-down

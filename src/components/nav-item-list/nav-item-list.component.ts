@@ -10,15 +10,21 @@ import {
 	OnDestroy,
 	OnInit,
 	signal,
-	TemplateRef
+	TemplateRef,
+	ViewContainerRef,
+	effect,
+	viewChildren
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
 import { HubNavItem } from '../../models/nav-item.model';
-import { HubNavVerticalExpandMode } from '../../models/nav-config.model';
+import { HubNavDropdownRenderMode, HubNavVerticalExpandMode } from '../../models/nav-config.model';
 import { HubNavItemComponent } from '../nav-item/nav-item.component';
 import { HubNavSeparatorComponent } from '../nav-separator/nav-separator.component';
 import { HubNavStateService } from '../../services/nav-state.service';
+import { OverlayRef, OverlayService } from 'ng-hub-ui-utils';
+
+type HubNavOverlayPlacement = 'root-dropdown' | 'flyout';
 
 /**
  * Renders a list of navigation items at a given depth level.
@@ -59,6 +65,15 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 	 */
 	readonly forceAccordionMode = input<boolean>(false);
 
+	/** Dropdown rendering mode used by non-panel submenus. */
+	readonly dropdownRenderMode = input<HubNavDropdownRenderMode>('inline');
+
+	/** Unique owner class used to mark overlay dropdowns for outside-click handling. */
+	readonly overlayOwnerClass = input<string>('');
+
+	/** Orientation class forwarded to overlay dropdowns so host-context styles still apply. */
+	readonly overlayOrientationClass = input<'hub-nav--horizontal' | 'hub-nav--vertical'>('hub-nav--horizontal');
+
 	/** Emitted when any item in the list is clicked. */
 	readonly itemClick = output<{ item: HubNavItem; event: Event }>();
 
@@ -83,6 +98,36 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 	/** Host element reference. */
 	private readonly el = inject(ElementRef<HTMLElement>);
 
+	/** Overlay service used to render flyout dropdowns outside clipping containers. */
+	private readonly overlayService = inject(OverlayService);
+
+	/** View container required to attach dropdown templates into overlays. */
+	private readonly viewContainerRef = inject(ViewContainerRef);
+
+	/** Wrapper elements that act as overlay origins for each rendered item. */
+	private readonly itemWrappers = viewChildren<ElementRef<HTMLElement>>('itemWrapper');
+
+	/** Dropdown templates available for overlay rendering. */
+	private readonly overlayTemplates = viewChildren<TemplateRef<unknown>>('overlayDropdownTemplate');
+
+	/** Active overlay instances keyed by nav item id. */
+	private readonly overlayRefs = new Map<string, OverlayRef>();
+
+	/** Keeps track of the latest overlay origin per item. */
+	private readonly overlayOrigins = new Map<string, HTMLElement>();
+
+	/** Keeps track of the latest overlay template per item. */
+	private readonly overlayTemplateRefs = new Map<string, TemplateRef<unknown>>();
+
+	/** Keeps track of the latest placement used per item. */
+	private readonly overlayPlacements = new Map<string, HubNavOverlayPlacement>();
+
+	/** Repositions every open overlay when the viewport changes. */
+	private readonly overlayViewportListener = () => this.updateOverlayPositions();
+
+	/** Whether global overlay viewport listeners are currently bound. */
+	private overlayViewportListenersBound = false;
+
 	/**
 	 * Whether children should render in accordion mode (inline with indentation).
 	 * True when orientation is vertical and expand mode is 'accordion'.
@@ -92,6 +137,33 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 			this.forceAccordionMode() ||
 			(this.state.orientation() === 'vertical' && this.state.verticalExpandMode() === 'accordion')
 	);
+
+	/** Keeps overlay dropdowns synchronized with the nav open state and rendered item tree. */
+	private readonly overlaySyncEffect = effect(() => {
+		const renderableItems = this.items().filter((item) => item.type !== 'separator');
+		const itemWrappers = this.itemWrappers();
+		const overlayTemplates = this.overlayTemplates();
+		const openOverlayIds = new Set<string>();
+
+		renderableItems.forEach((item, index) => {
+			if (!this.hasChildren(item) || !this.isExpanded(item) || !this.shouldRenderDropdownInOverlay(item)) {
+				return;
+			}
+
+			const origin = itemWrappers[index]?.nativeElement;
+			const template = overlayTemplates[index];
+			if (!origin || !template) {
+				return;
+			}
+
+			const placement = this.getOverlayPlacement();
+			openOverlayIds.add(item.id);
+			this.attachOrUpdateOverlay(item.id, origin, template, placement);
+		});
+
+		this.disposeInactiveOverlays(openOverlayIds);
+		this.syncOverlayViewportListeners();
+	});
 
 	/** Whether this is a horizontal root-level nav (affects arrow key mapping). */
 	private get isHorizontalRoot(): boolean {
@@ -128,6 +200,8 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 	/** @inheritDoc */
 	ngOnDestroy(): void {
 		this.routerSub?.unsubscribe();
+		this.disposeAllOverlays();
+		this.removeOverlayViewportListeners();
 	}
 
 	/**
@@ -248,6 +322,203 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/**
+	 * Whether the item's non-panel submenu should render through the overlay system.
+	 *
+	 * Overlay rendering is intentionally limited to click-triggered menus because
+	 * hover-triggered overlays require pointer hand-off between separate DOM trees.
+	 *
+	 * @param item - The nav item being rendered.
+	 * @returns `true` when the submenu should render in an overlay container.
+	 */
+	shouldRenderDropdownInOverlay(item: HubNavItem): boolean {
+		if (this.forceAccordionMode()) {
+			return false;
+		}
+
+		if (this.dropdownRenderMode() !== 'overlay') {
+			return false;
+		}
+
+		if (this.state.dropdownTrigger() !== 'click') {
+			return false;
+		}
+
+		const mode = this.getItemExpandMode(item);
+		return mode === 'flyout';
+	}
+
+	/**
+	 * Resolves the overlay placement to use for a submenu.
+	 *
+	 * @returns Placement variant for the overlay dropdown.
+	 */
+	getOverlayPlacement(): HubNavOverlayPlacement {
+		return this.state.orientation() === 'horizontal' && this.depth() === 0 ? 'root-dropdown' : 'flyout';
+	}
+
+	/**
+	 * Creates or updates the overlay used to render a dropdown submenu.
+	 *
+	 * @param itemId - Owner item id.
+	 * @param origin - Trigger element used for connected positioning.
+	 * @param template - Dropdown content template.
+	 * @param placement - Preferred overlay placement.
+	 */
+	private attachOrUpdateOverlay(
+		itemId: string,
+		origin: HTMLElement,
+		template: TemplateRef<unknown>,
+		placement: HubNavOverlayPlacement
+	): void {
+		const existingOverlay = this.overlayRefs.get(itemId);
+		const existingOrigin = this.overlayOrigins.get(itemId);
+		const existingTemplate = this.overlayTemplateRefs.get(itemId);
+		const existingPlacement = this.overlayPlacements.get(itemId);
+
+		if (
+			existingOverlay &&
+			existingOrigin === origin &&
+			existingTemplate === template &&
+			existingPlacement === placement
+		) {
+			existingOverlay.updatePosition();
+			return;
+		}
+
+		this.disposeOverlay(itemId);
+
+		const overlayRef = this.overlayService.create({
+			hasBackdrop: false,
+			panelClass: this.getOverlayClasses(),
+			positionStrategy: this.buildOverlayPositionStrategy(origin, placement)
+		});
+
+		const overlayContent = overlayRef.attach(template, this.viewContainerRef);
+		overlayContent.dataset['hubNavOverlayParentId'] = itemId;
+
+		this.overlayRefs.set(itemId, overlayRef);
+		this.overlayOrigins.set(itemId, origin);
+		this.overlayTemplateRefs.set(itemId, template);
+		this.overlayPlacements.set(itemId, placement);
+	}
+
+	/**
+	 * Rebuilds the position strategy for a connected dropdown overlay.
+	 *
+	 * @param origin - Trigger element used as anchor.
+	 * @param placement - Preferred overlay placement.
+	 * @returns Configured connected position strategy.
+	 */
+	private buildOverlayPositionStrategy(origin: HTMLElement, placement: HubNavOverlayPlacement) {
+		const positionBuilder = this.overlayService.position().flexibleConnectedTo(origin);
+
+		if (placement === 'root-dropdown') {
+			return positionBuilder.withPositions([
+				{ originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+				{ originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
+				{ originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 }
+			]);
+		}
+
+		return positionBuilder.withPositions([
+			{ originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top', offsetX: 4 },
+			{ originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top', offsetX: -4 },
+			{ originX: 'end', originY: 'bottom', overlayX: 'start', overlayY: 'bottom', offsetX: 4 }
+		]);
+	}
+
+	/**
+	 * Resolves the CSS classes applied to overlay dropdown containers.
+	 *
+	 * @returns Panel class list for overlay containers.
+	 */
+	private getOverlayClasses(): string[] {
+		return ['hub-nav-overlay-container', this.overlayOwnerClass(), this.overlayOrientationClass()];
+	}
+
+	/**
+	 * Disposes overlays that are no longer represented in the open dropdown state.
+	 *
+	 * @param activeOverlayIds - Set of overlay owner ids that should remain mounted.
+	 */
+	private disposeInactiveOverlays(activeOverlayIds: Set<string>): void {
+		for (const itemId of this.overlayRefs.keys()) {
+			if (!activeOverlayIds.has(itemId)) {
+				this.disposeOverlay(itemId);
+			}
+		}
+	}
+
+	/**
+	 * Disposes a single overlay and clears its bookkeeping entries.
+	 *
+	 * @param itemId - Owner item id.
+	 */
+	private disposeOverlay(itemId: string): void {
+		this.overlayRefs.get(itemId)?.dispose();
+		this.overlayRefs.delete(itemId);
+		this.overlayOrigins.delete(itemId);
+		this.overlayTemplateRefs.delete(itemId);
+		this.overlayPlacements.delete(itemId);
+	}
+
+	/**
+	 * Disposes every active overlay owned by this item list instance.
+	 */
+	private disposeAllOverlays(): void {
+		for (const itemId of [...this.overlayRefs.keys()]) {
+			this.disposeOverlay(itemId);
+		}
+	}
+
+	/**
+	 * Updates the connected position of all mounted overlays.
+	 */
+	private updateOverlayPositions(): void {
+		for (const overlayRef of this.overlayRefs.values()) {
+			overlayRef.updatePosition();
+		}
+	}
+
+	/**
+	 * Binds or unbinds global viewport listeners depending on overlay activity.
+	 */
+	private syncOverlayViewportListeners(): void {
+		if (this.overlayRefs.size > 0) {
+			this.ensureOverlayViewportListeners();
+			return;
+		}
+
+		this.removeOverlayViewportListeners();
+	}
+
+	/**
+	 * Attaches viewport listeners used to keep overlays positioned.
+	 */
+	private ensureOverlayViewportListeners(): void {
+		if (this.overlayViewportListenersBound) {
+			return;
+		}
+
+		window.addEventListener('resize', this.overlayViewportListener, { passive: true });
+		window.addEventListener('scroll', this.overlayViewportListener, true);
+		this.overlayViewportListenersBound = true;
+	}
+
+	/**
+	 * Removes viewport listeners attached for overlay positioning.
+	 */
+	private removeOverlayViewportListeners(): void {
+		if (!this.overlayViewportListenersBound) {
+			return;
+		}
+
+		window.removeEventListener('resize', this.overlayViewportListener);
+		window.removeEventListener('scroll', this.overlayViewportListener, true);
+		this.overlayViewportListenersBound = false;
+	}
+
 	// ──────────────────────────────────────────────
 	// Keyboard navigation (WAI-ARIA menubar/menu)
 	// ──────────────────────────────────────────────
@@ -321,10 +592,7 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 				this.state.closeAllDropdowns();
 				// Return focus to parent trigger if in a submenu
 				if (this.depth() > 0) {
-					const parentWrapper = (this.el.nativeElement as HTMLElement).closest('.hub-nav-item-wrapper');
-					const trigger = parentWrapper?.querySelector(
-						':scope > hub-nav-item .hub-nav-item__dropdown-toggle'
-					) as HTMLElement | null;
+					const trigger = this.findParentTrigger();
 					trigger?.focus();
 				}
 				break;
@@ -374,7 +642,7 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 				.map((i) => i.id);
 			this.state.openDropdown(itemId, siblingIds);
 			requestAnimationFrame(() => {
-				const submenu = wrapper?.querySelector('.hub-nav-dropdown, .hub-nav-accordion');
+				const submenu = this.findSubmenuElement(itemId, wrapper);
 				const firstChild = submenu?.querySelector(
 					'.hub-nav-item__link, .hub-nav-item__dropdown-toggle'
 				) as HTMLElement | null;
@@ -393,5 +661,57 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 		if (itemId && this.state.isDropdownOpen(itemId)) {
 			this.state.closeDropdown(itemId);
 		}
+	}
+
+	/**
+	 * Finds the rendered submenu element for the given item.
+	 *
+	 * Inline dropdowns live inside the current wrapper while overlay dropdowns
+	 * are rendered into `document.body` and must be found by owner item id.
+	 *
+	 * @param itemId - Parent item id that owns the submenu.
+	 * @param wrapper - Optional inline wrapper element that may contain the submenu.
+	 * @returns The submenu container when it exists.
+	 */
+	private findSubmenuElement(itemId: string, wrapper: Element | null): HTMLElement | null {
+		const inlineSubmenu = wrapper?.querySelector('.hub-nav-dropdown, .hub-nav-accordion') as HTMLElement | null;
+		if (inlineSubmenu) {
+			return inlineSubmenu;
+		}
+
+		const escapedId = CSS.escape(itemId);
+		return document.querySelector(
+			`.hub-nav-overlay-container [data-hub-nav-overlay-parent-id="${escapedId}"]`
+		) as HTMLElement | null;
+	}
+
+	/**
+	 * Resolves the trigger element that opened the current submenu.
+	 *
+	 * For inline submenus, the parent wrapper is still available through DOM
+	 * ancestry. Overlay-rendered submenus need to recover the owner item id from
+	 * the overlay content element instead.
+	 *
+	 * @returns The trigger element that should receive focus on Escape.
+	 */
+	private findParentTrigger(): HTMLElement | null {
+		const host = this.el.nativeElement as HTMLElement;
+		const parentWrapper = host.closest('.hub-nav-item-wrapper');
+		if (parentWrapper) {
+			return parentWrapper.querySelector(
+				':scope > hub-nav-item .hub-nav-item__dropdown-toggle, :scope > hub-nav-item .hub-nav-item__link'
+			) as HTMLElement | null;
+		}
+
+		const overlayDropdown = host.closest('[data-hub-nav-overlay-parent-id]') as HTMLElement | null;
+		const parentItemId = overlayDropdown?.dataset['hubNavOverlayParentId'];
+		if (!parentItemId) {
+			return null;
+		}
+
+		const escapedId = CSS.escape(parentItemId);
+		return document.querySelector(
+			`hub-nav-item[data-item-id="${escapedId}"] .hub-nav-item__dropdown-toggle, hub-nav-item[data-item-id="${escapedId}"] .hub-nav-item__link`
+		) as HTMLElement | null;
 	}
 }

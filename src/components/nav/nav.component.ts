@@ -7,6 +7,7 @@ import {
 	computed,
 	contentChild,
 	effect,
+	signal,
 	OnInit,
 	OnDestroy,
 	ElementRef,
@@ -28,6 +29,8 @@ import { HubNavItemTemplateDirective } from '../../directives/nav-item-template.
 import { HubNavTogglerComponent } from '../nav-toggler/nav-toggler.component';
 import { HubNavMobilePanelComponent } from '../nav-mobile-panel/nav-mobile-panel.component';
 import { HubNavPanelContainerComponent } from '../nav-panel-container/nav-panel-container.component';
+
+let hubNavOverlayOwnerCounter = 0;
 
 /**
  * Root navigation component. Renders a horizontal or vertical navigation bar
@@ -154,6 +157,12 @@ export class HubNavComponent implements OnInit, OnDestroy {
 	/** Angular router for URL-based panel initialization. */
 	private readonly router = inject(Router);
 
+	/** Reactive router URL used to synchronize route-driven nav state. */
+	private readonly currentUrl = signal(this.router.url);
+
+	/** Marks when route-driven synchronization can start reacting to inputs. */
+	private readonly routeSyncReady = signal(false);
+
 	/** Whether component lifecycle initialization has completed. */
 	private initialized = false;
 
@@ -187,6 +196,17 @@ export class HubNavComponent implements OnInit, OnDestroy {
 	/** Whether panels are currently active (panel stack is non-empty). */
 	readonly hasPanels = computed(() => this.state.panelCount() > 0);
 
+	/** Unique owner class applied to this nav instance's overlay dropdowns. */
+	readonly overlayOwnerClass = `hub-nav-overlay-owner-${++hubNavOverlayOwnerCounter}`;
+
+	/** Orientation class forwarded to overlay-rendered dropdowns. */
+	readonly overlayOrientationClass = computed<'hub-nav--horizontal' | 'hub-nav--vertical'>(() =>
+		this.resolvedOrientation() === 'horizontal' ? 'hub-nav--horizontal' : 'hub-nav--vertical'
+	);
+
+	/** Dropdown render mode forwarded to item lists. */
+	readonly dropdownRenderMode = computed(() => this.resolvedConfig().dropdownRenderMode);
+
 	/** The sidebar side from resolved config. */
 	readonly sidebarSide = computed(() => this.resolvedConfig().sidebarSide);
 
@@ -209,6 +229,36 @@ export class HubNavComponent implements OnInit, OnDestroy {
 			this.teardownBreakpointListener();
 			this.setupBreakpointListener();
 		}
+	});
+
+	/** Keeps dropdowns and drill-down panels synchronized with the current URL and item tree. */
+	private routeSyncEffect = effect(() => {
+		if (!this.routeSyncReady() || !this.autoOpenFromRoute()) {
+			return;
+		}
+
+		const items = this.items();
+		const currentUrl = this.currentUrl();
+		const currentPath = this.extractPath(currentUrl);
+
+		if (items.length === 0) {
+			this.state.closeAllDropdowns();
+			this.state.closeAllPanels();
+			this._lastSyncedPath = '';
+			return;
+		}
+
+		if (this.isCollapsed()) {
+			this.state.syncDropdownsWithRoute(items, currentUrl);
+			this._lastSyncedPath = currentPath;
+			return;
+		}
+
+		if (currentPath === this._lastSyncedPath && this.state.panelCount() > 0) {
+			return;
+		}
+
+		this.openPanelsFromRoute(currentUrl);
 	});
 
 	/** ARIA label for the nav element. */
@@ -248,34 +298,12 @@ export class HubNavComponent implements OnInit, OnDestroy {
 
 		this.setupBreakpointListener();
 		this.setupClickOutsideListener();
-
-		if (this.autoOpenFromRoute()) {
-			if (this.isCollapsed()) {
-				this.state.syncDropdownsWithRoute(this.items(), this.router.url);
-			} else {
-				this.openPanelsFromRoute(this.router.url);
-			}
-
-			this.routerSub = this.router.events
-				.pipe(filter((e) => e instanceof NavigationEnd))
-				.subscribe((e) => {
-					const nextUrl = (e as NavigationEnd).urlAfterRedirects;
-					const nextPath = this.extractPath(nextUrl);
-
-					if (this.isCollapsed()) {
-						this.state.syncDropdownsWithRoute(this.items(), nextUrl);
-						this._lastSyncedPath = nextPath;
-						return;
-					}
-
-					// Fragment-only transitions should not rebuild panel stacks.
-					if (nextPath === this._lastSyncedPath) {
-						return;
-					}
-
-					this.openPanelsFromRoute(nextUrl);
-				});
-		}
+		this.routeSyncReady.set(true);
+		this.routerSub = this.router.events
+			.pipe(filter((e) => e instanceof NavigationEnd))
+			.subscribe((e) => {
+				this.currentUrl.set((e as NavigationEnd).urlAfterRedirects);
+			});
 	}
 
 	/** @inheritDoc */
@@ -485,7 +513,9 @@ export class HubNavComponent implements OnInit, OnDestroy {
 
 		this.documentClickHandler = (event: MouseEvent) => {
 			const target = event.target as HTMLElement;
-			if (!this.elementRef.nativeElement.contains(target)) {
+			const clickInsideHost = this.elementRef.nativeElement.contains(target);
+			const clickInsideOverlay = !!target.closest(`.${this.overlayOwnerClass}`);
+			if (!clickInsideHost && !clickInsideOverlay) {
 				this.zone.run(() => {
 					// Close dropdowns/flyouts on outside click
 					this.state.closeAllDropdowns();
@@ -546,50 +576,47 @@ export class HubNavComponent implements OnInit, OnDestroy {
 	 * Parses the given URL and opens the panels that correspond to the active route.
 	 *
 	 * The algorithm:
-	 * 1. Extract the path without fragment/query: `/calendar/examples` → `['calendar', 'examples']`
-	 * 2. Find the root item whose id matches the first segment.
+	 * 1. Extract the path without fragment/query.
+	 * 2. Find the root item whose own route or descendants match the active URL.
 	 * 3. Open a panel for that root item (closes any existing panels first).
-	 * 4. If a second segment exists and matches a child item that has its own
-	 *    children (e.g. the "Examples" dropdown), open a second panel for it.
+	 * 4. If a child section with nested items also matches the active URL
+	 *    (e.g. the "Examples" dropdown), open a second panel for it.
 	 *
-	 * @param url - The full URL including optional fragment, e.g. `/calendar/examples#cal-basic`.
+	 * This matching strategy is resilient to localized prefixes such as
+	 * `/en/modal/overview` and `/es/modal/examples#modal-basic`.
+	 *
+	 * @param url - The full URL including optional fragment.
 	 */
 	private openPanelsFromRoute(url: string): void {
-		// Strip query string and fragment
-		const path = url.split('?')[0].split('#')[0];
-		this._lastSyncedPath = path;
-		const segments = path.split('/').filter(Boolean);
-
-		if (segments.length === 0) {
-			return;
-		}
+		const path = this.extractPath(url);
 
 		const rootItems = this.items();
-		const libraryId = segments[0];
-
-		// Find the matching root nav item
-		const rootItem = rootItems.find((item) => item.id === libraryId);
-		if (!rootItem?.children?.length) {
+		if (rootItems.length === 0) {
 			return;
 		}
+
+		const rootItem = rootItems.find((item) => this.state.isItemOrDescendantActive(item, url));
+		if (!rootItem?.children?.length) {
+			this.state.closeAllPanels();
+			this._lastSyncedPath = path;
+			return;
+		}
+
+		this._lastSyncedPath = path;
 
 		// Always rebuild route-driven panel state from scratch to avoid stale
 		// panel stacks when visibility limits or orientation changed.
 		this.state.closeAllPanels();
 		this.state.openPanel(rootItem, rootItems);
 
-		// If a second path segment exists, find and open the matching child panel
-		if (segments.length > 1) {
-			const sectionSegment = segments[1];
-			const sectionItem = rootItem.children.find(
-				(child) => child.children?.length && child.route?.toString().split('/').pop() === sectionSegment
-			);
-			if (sectionItem) {
-				// Keep root-level replacement logic scoped to true root items.
-				// Passing rootItems here preserves drill-down behavior when
-				// `panelMaxVisible` forces nested levels to replace the last panel.
-				this.state.openPanel(sectionItem, rootItems);
-			}
+		const sectionItem = rootItem.children.find(
+			(child) => child.children?.length && this.state.isItemOrDescendantActive(child, url)
+		);
+		if (sectionItem) {
+			// Keep root-level replacement logic scoped to true root items.
+			// Passing rootItems here preserves drill-down behavior when
+			// `panelMaxVisible` forces nested levels to replace the last panel.
+			this.state.openPanel(sectionItem, rootItems);
 		}
 	}
 

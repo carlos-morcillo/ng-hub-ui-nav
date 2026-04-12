@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, output, computed, TemplateRef, HostListener, ElementRef, inject } from '@angular/core';
+import { HubNavDropdownRenderMode } from '../../models/nav-config.model';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavPanelState } from '../../models/nav-panel-state.model';
 import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.component';
@@ -39,6 +40,15 @@ export class HubNavPanelComponent {
 
 	/** Optional custom template for rendering item content. */
 	readonly itemTemplate = input<TemplateRef<unknown> | null>(null);
+
+	/** Dropdown rendering mode forwarded to the panel item list. */
+	readonly dropdownRenderMode = input<HubNavDropdownRenderMode>('inline');
+
+	/** Unique owner class used to scope overlay dropdowns. */
+	readonly overlayOwnerClass = input<string>('');
+
+	/** Orientation class forwarded to overlay dropdowns rendered inside the panel. */
+	readonly overlayOrientationClass = input<'hub-nav--horizontal' | 'hub-nav--vertical'>('hub-nav--vertical');
 
 	/**
 	 * Controls whether the panel header is rendered.
