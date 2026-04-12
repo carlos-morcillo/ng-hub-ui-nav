@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [21.1.1] - 2026-04-12
+
+### Fixed
+
+- Fixed panel mode behavior when a `nav-item` lacks a dedicated caret, ensuring the panel opens on label click.
+
+### Documentation
+
+- Updated `README.md` and `README.es.md` with live documentation links and corrected Hub UI family references.
+
 ## [21.1.0] - 2026-04-01
 
 ### Added

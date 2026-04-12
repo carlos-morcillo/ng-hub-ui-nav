@@ -151,6 +151,12 @@ export class HubNavItemComponent {
 			return;
 		}
 
+		// In panel mode there is no dedicated caret, so the label click must
+		// also request the child panel opening while preserving the route click.
+		if (this.hasChildren() && !this.showCaret()) {
+			this.toggleDropdown.emit(item);
+		}
+
 		this.clicked.emit({ item, event });
 	}
 
