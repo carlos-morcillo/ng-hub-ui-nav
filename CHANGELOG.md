@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.0.0] - 2026-06-17
+
+### Changed
+
+- Aligned with Angular 22.
+- README documentation standardized.
+
+
 ## [21.1.1] - 2026-04-12
 
 ### Fixed
