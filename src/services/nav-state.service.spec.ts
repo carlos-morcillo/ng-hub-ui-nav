@@ -34,7 +34,8 @@ describe('HubNavStateService', () => {
 				ariaLabel: 'Main',
 				panelMaxVisible: 3,
 				sidebarSide: 'left',
-				panelWidth: '16rem'
+				panelWidth: '16rem',
+				dropdownRenderMode: 'inline'
 			});
 			expect(service.orientation()).toBe('vertical');
 			expect(service.verticalExpandMode()).toBe('flyout');
@@ -283,6 +284,10 @@ describe('HubNavStateService', () => {
 
 	describe('getEffectiveExpandMode()', () => {
 		it('should return item expandMode override when set', () => {
+			service.setConfig({
+				...service.config(),
+				orientation: 'vertical'
+			});
 			const item: HubNavItem = { id: 'test', label: 'Test', type: 'dropdown', expandMode: 'panel' };
 			expect(service.getEffectiveExpandMode(item)).toBe('panel');
 		});
@@ -290,6 +295,7 @@ describe('HubNavStateService', () => {
 		it('should fall back to config verticalExpandMode', () => {
 			service.setConfig({
 				...service.config(),
+				orientation: 'vertical',
 				verticalExpandMode: 'flyout'
 			});
 			const item: HubNavItem = { id: 'test', label: 'Test', type: 'dropdown' };
@@ -299,6 +305,7 @@ describe('HubNavStateService', () => {
 		it('should return accordion for panel mode when collapsed (mobile fallback)', () => {
 			service.setConfig({
 				...service.config(),
+				orientation: 'vertical',
 				verticalExpandMode: 'panel'
 			});
 			service.setCollapsed(true);
@@ -309,6 +316,7 @@ describe('HubNavStateService', () => {
 		it('should not apply mobile fallback when not collapsed', () => {
 			service.setConfig({
 				...service.config(),
+				orientation: 'vertical',
 				verticalExpandMode: 'panel'
 			});
 			const item: HubNavItem = { id: 'test', label: 'Test', type: 'dropdown' };

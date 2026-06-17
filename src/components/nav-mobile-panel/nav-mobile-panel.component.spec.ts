@@ -3,6 +3,7 @@ import { ComponentRef } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { HubNavMobilePanelComponent } from './nav-mobile-panel.component';
 import { HubNavItem } from '../../models/nav-item.model';
+import { HubNavStateService } from '../../services/nav-state.service';
 
 describe('HubNavMobilePanelComponent', () => {
 	let component: HubNavMobilePanelComponent;
@@ -23,7 +24,7 @@ describe('HubNavMobilePanelComponent', () => {
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
 			imports: [HubNavMobilePanelComponent],
-			providers: [provideRouter([])]
+			providers: [HubNavStateService, provideRouter([])]
 		}).compileComponents();
 
 		fixture = TestBed.createComponent(HubNavMobilePanelComponent);

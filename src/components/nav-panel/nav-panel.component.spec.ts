@@ -106,12 +106,14 @@ describe('HubNavPanelComponent', () => {
 		const fakeItem = document.createElement('button');
 		directList.appendChild(fakeItem);
 
-		fixture.nativeElement.dispatchEvent(
-			new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })
-		);
+		// The inner item-list stops propagation of its own ArrowLeft handling, so a
+		// bubbling event never reaches the panel host. Invoke the panel handler
+		// directly with a target inside the direct list to exercise the
+		// direct-list ownership check (isDirectPanelFocus).
+		const event = new KeyboardEvent('keydown', { key: 'ArrowLeft' });
+		Object.defineProperty(event, 'target', { value: fakeItem });
+		component.onKeyDown(event);
 
-		// Dispatch from the nested target to exercise the direct-list ownership check.
-		fakeItem.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
 		expect(spy).toHaveBeenCalledWith('panel-1');
 	});
 
