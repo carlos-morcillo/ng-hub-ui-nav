@@ -47,12 +47,12 @@
 	--hub-nav-item-padding-y: var(--hub-ref-space-2, 0.5rem);
 	--hub-nav-item-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-item-font-size: var(--hub-ref-font-size-base, 1rem);
-	--hub-nav-item-font-weight: var(--hub-ref-font-weight-normal, 400);
-	--hub-nav-item-border-radius: var(--hub-ref-border-radius-sm, 0.25rem);
+	--hub-nav-item-font-weight: var(--hub-ref-font-weight-base, 400);
+	--hub-nav-item-border-radius: var(--hub-ref-radius-sm, 0.25rem);
 	--hub-nav-item-transition: var(--hub-sys-transition-fast, 150ms ease);
 
 	// ── Item Hover ──
-	--hub-nav-item-hover-bg: var(--hub-sys-state-hover-overlay, rgba(0, 0, 0, 0.04));
+	--hub-nav-item-hover-bg: var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.04));
 	--hub-nav-item-hover-color: var(--hub-sys-color-primary, #0d6efd);
 
 	// ── Item Active ──
@@ -68,11 +68,11 @@
 	--hub-nav-dropdown-bg: var(--hub-sys-surface-elevated, #fff);
 	--hub-nav-dropdown-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-dropdown-border-color: var(--hub-sys-border-color-default, #dee2e6);
-	--hub-nav-dropdown-border-radius: var(--hub-nav-item-border-radius, var(--hub-ref-border-radius-sm, 0.25rem));
-	--hub-nav-dropdown-shadow: var(--hub-sys-shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
+	--hub-nav-dropdown-border-radius: var(--hub-nav-item-border-radius, var(--hub-ref-radius-sm, 0.25rem));
+	--hub-nav-dropdown-shadow: var(--hub-sys-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
 	--hub-nav-dropdown-padding-y: var(--hub-ref-space-2, 0.5rem);
 	--hub-nav-dropdown-min-width: 12rem;
-	--hub-nav-dropdown-z-index: var(--hub-sys-z-index-dropdown, 1000);
+	--hub-nav-dropdown-z-index: var(--hub-sys-zindex-dropdown, 1000);
 
 	// ── Caret ──
 	--hub-nav-caret-size: 0.3rem;
@@ -98,7 +98,7 @@
 	--hub-nav-badge-padding-y: 0.25em;
 	--hub-nav-badge-bg: var(--hub-sys-color-danger, #dc3545);
 	--hub-nav-badge-color: #fff;
-	--hub-nav-badge-border-radius: var(--hub-ref-border-radius-pill, 50rem);
+	--hub-nav-badge-border-radius: var(--hub-ref-radius-pill, 50rem);
 
 	// ── Toggler (hamburger) ──
 	--hub-nav-toggler-padding-x: var(--hub-ref-space-2, 0.5rem);
@@ -106,13 +106,13 @@
 	--hub-nav-toggler-font-size: var(--hub-ref-font-size-lg, 1.25rem);
 	--hub-nav-toggler-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-toggler-border-color: var(--hub-sys-border-color-default, #dee2e6);
-	--hub-nav-toggler-border-radius: var(--hub-ref-border-radius-sm, 0.25rem);
+	--hub-nav-toggler-border-radius: var(--hub-ref-radius-sm, 0.25rem);
 
 	// ── Mobile Panel ──
 	--hub-nav-mobile-bg: var(--hub-sys-surface-page, #fff);
 	--hub-nav-mobile-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-mobile-width: 18rem;
-	--hub-nav-mobile-z-index: var(--hub-sys-z-index-fixed, 1030);
+	--hub-nav-mobile-z-index: var(--hub-sys-zindex-fixed, 1030);
 	--hub-nav-mobile-backdrop-bg: rgba(0, 0, 0, 0.5);
 	--hub-nav-mobile-transition: var(--hub-sys-transition-base, 300ms ease);
 
@@ -131,7 +131,7 @@
 	--hub-nav-panel-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-nav-panel-border-width: 1px;
 	--hub-nav-panel-shadow: var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
-	--hub-nav-panel-z-index: var(--hub-sys-z-index-dropdown, 1000);
+	--hub-nav-panel-z-index: var(--hub-sys-zindex-dropdown, 1000);
 	--hub-nav-panel-transition: transform var(--hub-sys-transition-base, 300ms ease);
 
 	// ── Panel header ──
@@ -144,6 +144,6 @@
 
 	// ── Panel back button ──
 	--hub-nav-panel-back-color: var(--hub-sys-text-primary, #212529);
-	--hub-nav-panel-back-hover-bg: var(--hub-sys-state-hover-overlay, rgba(0, 0, 0, 0.04));
+	--hub-nav-panel-back-hover-bg: var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.04));
 	--hub-nav-panel-back-size: 2rem;
 }

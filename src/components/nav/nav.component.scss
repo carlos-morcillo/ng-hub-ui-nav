@@ -303,7 +303,7 @@ nav {
 	top: var(--hub-nav-sticky-top, 0px);
 	align-self: flex-start;
 	max-height: calc(100vh - var(--hub-nav-sticky-top, 0px));
-	z-index: var(--hub-sys-z-index-sticky, 1020);
+	z-index: var(--hub-sys-zindex-sticky, 1020);
 }
 
 :host(.hub-nav--fixed) {
@@ -311,5 +311,5 @@ nav {
 	top: 0;
 	left: 0;
 	right: 0;
-	z-index: var(--hub-sys-z-index-fixed, 1030);
+	z-index: var(--hub-sys-zindex-fixed, 1030);
 }

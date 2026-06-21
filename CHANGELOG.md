@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- Aligned cross-layer token references with the canonical `ng-hub-ui-ds` names (no visual change; the components now follow the theme instead of only their inline fallback):
+  - `--hub-sys-z-index-*` → `--hub-sys-zindex-*`
+  - `--hub-sys-shadow-md` → `--hub-sys-shadow`
+  - `--hub-sys-state-hover-overlay` → `--hub-sys-state-hover-bg`
+  - `--hub-ref-border-radius-*` → `--hub-ref-radius-*`
+  - `--hub-ref-font-weight-normal` → `--hub-ref-font-weight-base`
+
 ## [22.0.0] - 2026-06-17
 
 ### Changed
