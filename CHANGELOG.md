@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [22.1.0] - 2026-06-24
+
+### Added
+
+- New `variant` input on `<hub-nav>` selecting the **semantic accent** of the hover/active affordances: `<hub-nav variant="success">` recolours the active item background and the hover link colour. The built-in variants (`primary` / `success` / `danger` / `warning` / `info`) render with the exact design-system tints; **any other string is also accepted** — the nav reads `--hub-sys-color-<variant>` from the host application, so a custom accent palette interconnects with no changes to the library. Defaults to `primary`. Mirrors the `<hub-panels>` accent system.
+- New token `--hub-nav-accent` (defaults to `--hub-sys-color-primary`). `--hub-nav-item-hover-color` and `--hub-nav-item-active-bg` now resolve through this single accent instead of being hard-wired to `--hub-sys-color-primary`.
+- **Richer accent treatment** for the item hover/active states: the hover and active backgrounds are now a soft `color-mix` tint of the accent (new `--hub-nav-accent-subtle`) and the active text uses the accent colour. In a **horizontal** navbar the active item also gains an accent **indicator bar** along its bottom edge (tabs-style underline); **vertical / sidebar navs are signalled by the tint + accent text alone — no inline-start bar**. New tokens `--hub-nav-accent-subtle`, `--hub-nav-item-active-indicator-color`, `--hub-nav-item-active-indicator-size`.
+- The **nav surface** (`--hub-nav-bg`) now carries a faint wash of the accent (`color-mix(accent 5%, surface)`), so each `variant` reads as a distinctly-themed surface, not just via the active item.
+
+### Changed
+
+- **BREAKING (visual)**: the active item style moved from a solid accent fill + white text to a soft accent tint + accent text + accent indicator bar; the hover background is now an accent tint instead of a neutral grey; and the nav surface carries a faint accent wash instead of being pure white. Override `--hub-nav-item-active-bg` / `--hub-nav-item-active-color` / `--hub-nav-item-hover-bg` / `--hub-nav-bg` to restore the previous look.
 
 ### Fixed
 

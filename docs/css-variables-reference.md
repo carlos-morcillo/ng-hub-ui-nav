@@ -47,11 +47,15 @@ Import the library styles and override tokens at component, page, or theme level
 
 | Variable | Default |
 |---|---|
-| `--hub-nav-bg` | `var(--hub-sys-surface-page, #fff)` |
+| `--hub-nav-accent` | `var(--hub-sys-color-primary, #0d6efd)` |
+| `--hub-nav-accent-subtle` | `color-mix(in srgb, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff))` |
+| `--hub-nav-bg` | `color-mix(in srgb, var(--hub-nav-accent) 5%, var(--hub-sys-surface-page, #fff))` |
 | `--hub-nav-color` | `var(--hub-sys-text-primary, #212529)` |
 | `--hub-nav-border-color` | `var(--hub-sys-border-color-default, #dee2e6)` |
 | `--hub-nav-border-width` | `1px` |
 | `--hub-nav-border-style` | `solid` |
+
+The single `--hub-nav-accent` hook (re-based per the `variant` input) drives the hover/active tints, the active text colour, the indicator bar, and the surface wash — recolour the whole nav from one place.
 
 ## Brand Slots
 
@@ -73,13 +77,17 @@ Import the library styles and override tokens at component, page, or theme level
 | `--hub-nav-item-font-weight` | `var(--hub-ref-font-weight-normal, 400)` |
 | `--hub-nav-item-border-radius` | `var(--hub-ref-border-radius-sm, 0.25rem)` |
 | `--hub-nav-item-transition` | `var(--hub-sys-transition-fast, 150ms ease)` |
-| `--hub-nav-item-hover-bg` | `var(--hub-sys-state-hover-overlay, rgba(0, 0, 0, 0.04))` |
-| `--hub-nav-item-hover-color` | `var(--hub-sys-color-primary, #0d6efd)` |
-| `--hub-nav-item-active-bg` | `var(--hub-sys-color-primary, #0d6efd)` |
-| `--hub-nav-item-active-color` | `#fff` |
+| `--hub-nav-item-hover-bg` | `color-mix(in srgb, var(--hub-nav-accent) 8%, var(--hub-sys-surface-page, #fff))` |
+| `--hub-nav-item-hover-color` | `var(--hub-nav-accent)` |
+| `--hub-nav-item-active-bg` | `var(--hub-nav-accent-subtle)` |
+| `--hub-nav-item-active-color` | `var(--hub-nav-accent)` |
 | `--hub-nav-item-active-font-weight` | `var(--hub-ref-font-weight-semibold, 600)` |
+| `--hub-nav-item-active-indicator-color` | `var(--hub-nav-accent)` |
+| `--hub-nav-item-active-indicator-size` | `3px` |
 | `--hub-nav-item-disabled-color` | `var(--hub-sys-text-muted, #6c757d)` |
 | `--hub-nav-item-disabled-opacity` | `var(--hub-sys-opacity-disabled, 0.65)` |
+
+The active indicator bar (`--hub-nav-item-active-indicator-*`) renders only on horizontal navbars; vertical/sidebar navs are signalled by the tint + accent text alone.
 
 ## Dropdown and Caret
 
@@ -171,5 +179,5 @@ Import the library styles and override tokens at component, page, or theme level
 | `--hub-nav-panel-header-font-weight` | `var(--hub-ref-font-weight-semibold, 600)` |
 | `--hub-nav-panel-header-padding-x` | `var(--hub-ref-space-3, 1rem)` |
 | `--hub-nav-panel-back-color` | `var(--hub-sys-text-primary, #212529)` |
-| `--hub-nav-panel-back-hover-bg` | `var(--hub-sys-state-hover-overlay, rgba(0, 0, 0, 0.04))` |
+| `--hub-nav-panel-back-hover-bg` | `var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.04))` |
 | `--hub-nav-panel-back-size` | `2rem` |

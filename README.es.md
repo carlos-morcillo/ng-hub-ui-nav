@@ -68,6 +68,7 @@ Esta biblioteca forma parte del ecosistema **ng-hub-ui**:
 - Estados activos sincronizados con Angular Router.
 - Directivas de scroll-spy para documentación y páginas de una sola vista.
 - Soporte de `sticky` en navegación vertical.
+- Sistema de acento semántico `variant` (`primary` / `success` / `danger` / `warning` / `info`, además de cualquier acento personalizado) que recolorea los estados hover/activo — replica el de `<hub-panels>`.
 - Personalización completa mediante variables CSS `--hub-nav-*`.
 
 ## Instalación
@@ -168,6 +169,7 @@ export class ExampleComponent {
 | `navClass` | `string` | `''` | Clase adicional aplicada al `<nav>` interno. |
 | `itemTemplate` | `TemplateRef<unknown> \| null` | `null` | Plantilla opcional para renderizar items. |
 | `autoOpenFromRoute` | `boolean` | `false` | Abre dropdowns/paneles en función de la ruta activa. |
+| `variant` | `'primary' \| 'success' \| 'danger' \| 'warning' \| 'info' \| string` | `'primary'` | Acento semántico para los estados hover/activo. Los valores integrados usan los tintes del design-system; cualquier string personalizado se resuelve mediante `--hub-sys-color-<variant>`. |
 
 #### Outputs
 
@@ -234,14 +236,31 @@ El componente expone un conjunto completo de tokens `--hub-nav-*`. La referencia
 
 - [CSS Variables Reference](docs/css-variables-reference.md)
 
-Ejemplo:
+### Recolorear toda la navegación desde un único acento
+
+Los estados hover/activo y la superficie de la navegación derivan todos de un único acento. Defínelo (o usa el input `variant`) para re-tematizar la navegación entera:
 
 ```css
 .my-sidebar {
 	--hub-nav-panel-width: 18rem;
+	/* Único punto de recoloreo — el fondo activo con tinte, el texto de acento,
+	   el tinte de hover, la barra indicadora y el lavado de la superficie siguen
+	   este único acento. */
+	--hub-nav-accent: var(--hub-sys-color-success);
+	--hub-nav-dropdown-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.16);
+}
+```
+
+### Restaurar el aspecto clásico de relleno sólido
+
+El item activo por defecto ahora es un tinte suave de acento + texto de acento. Para restaurar el relleno sólido de acento + texto blanco anterior (el aspecto previo a `22.1.0`), sobrescribe estos tokens explícitamente:
+
+```css
+.my-sidebar {
 	--hub-nav-item-active-bg: #0d6efd;
 	--hub-nav-item-active-color: #ffffff;
-	--hub-nav-dropdown-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.16);
+	--hub-nav-item-hover-bg: rgba(0, 0, 0, 0.04);
+	--hub-nav-bg: #ffffff;
 }
 ```
 

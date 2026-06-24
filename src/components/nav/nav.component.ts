@@ -63,6 +63,8 @@ let hubNavOverlayOwnerCounter = 0;
 		'[class.hub-nav--fixed]': 'resolvedConfig().position === "fixed"',
 		'[class.hub-nav--sidebar-left]': 'resolvedConfig().sidebarSide === "left"',
 		'[class.hub-nav--sidebar-right]': 'resolvedConfig().sidebarSide === "right"',
+		'[attr.data-variant]': 'variant() ?? null',
+		'[style.--hub-nav-accent]': 'groupAccent()',
 		'[style.width]': 'resolvedOrientation() === "vertical" ? "100%" : null',
 		'[style.align-self]': 'resolvedOrientation() === "vertical" ? "stretch" : null',
 		'[style.--hub-nav-sticky-top]': 'resolvedConfig().stickyTop',
@@ -98,6 +100,26 @@ export class HubNavComponent implements OnInit, OnDestroy {
 	 * Useful for sidebar navigations where the URL should drive the open state.
 	 */
 	readonly autoOpenFromRoute = input<boolean>(false);
+
+	/**
+	 * Semantic accent applied to the hover/active affordances of the nav items.
+	 * The built-in values (`primary` / `success` / `danger` / `warning` / `info`)
+	 * render with the design-system tints; any other string is also accepted —
+	 * the nav reads `--hub-sys-color-<variant>` from the host application, so a
+	 * custom accent palette interconnects with no changes to this library.
+	 * Defaults to `primary` when omitted.
+	 */
+	readonly variant = input<'primary' | 'success' | 'danger' | 'warning' | 'info' | (string & {}) | undefined>(undefined);
+
+	/**
+	 * Inline accent fed to the nav styles: `var(--hub-sys-color-<variant>)` for the
+	 * active variant, or `null` to keep the `primary` default. Keeps the variant
+	 * set open — any accent token the host app defines is picked up by name.
+	 */
+	readonly groupAccent = computed(() => {
+		const variant = this.variant();
+		return variant ? `var(--hub-sys-color-${variant})` : null;
+	});
 
 	/** Start slot template projected via `hubNavStart` directive. */
 	private readonly startDirective = contentChild(HubNavStartDirective);

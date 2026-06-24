@@ -47,11 +47,15 @@ Importa los estilos de la librería y sobrescribe los tokens a nivel de componen
 
 | Variable | Default |
 |---|---|
-| `--hub-nav-bg` | `var(--hub-sys-surface-page, #fff)` |
+| `--hub-nav-accent` | `var(--hub-sys-color-primary, #0d6efd)` |
+| `--hub-nav-accent-subtle` | `color-mix(in srgb, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff))` |
+| `--hub-nav-bg` | `color-mix(in srgb, var(--hub-nav-accent) 5%, var(--hub-sys-surface-page, #fff))` |
 | `--hub-nav-color` | `var(--hub-sys-text-primary, #212529)` |
 | `--hub-nav-border-color` | `var(--hub-sys-border-color-default, #dee2e6)` |
 | `--hub-nav-border-width` | `1px` |
 | `--hub-nav-border-style` | `solid` |
+
+El único punto `--hub-nav-accent` (re-basado según el input `variant`) controla los tintes de hover/activo, el color del texto activo, la barra indicadora y el lavado de la superficie — recolorea toda la navegación desde un solo sitio.
 
 ## Brand Slots
 
@@ -73,13 +77,17 @@ Importa los estilos de la librería y sobrescribe los tokens a nivel de componen
 | `--hub-nav-item-font-weight` | `var(--hub-ref-font-weight-normal, 400)` |
 | `--hub-nav-item-border-radius` | `var(--hub-ref-border-radius-sm, 0.25rem)` |
 | `--hub-nav-item-transition` | `var(--hub-sys-transition-fast, 150ms ease)` |
-| `--hub-nav-item-hover-bg` | `var(--hub-sys-state-hover-overlay, rgba(0, 0, 0, 0.04))` |
-| `--hub-nav-item-hover-color` | `var(--hub-sys-color-primary, #0d6efd)` |
-| `--hub-nav-item-active-bg` | `var(--hub-sys-color-primary, #0d6efd)` |
-| `--hub-nav-item-active-color` | `#fff` |
+| `--hub-nav-item-hover-bg` | `color-mix(in srgb, var(--hub-nav-accent) 8%, var(--hub-sys-surface-page, #fff))` |
+| `--hub-nav-item-hover-color` | `var(--hub-nav-accent)` |
+| `--hub-nav-item-active-bg` | `var(--hub-nav-accent-subtle)` |
+| `--hub-nav-item-active-color` | `var(--hub-nav-accent)` |
 | `--hub-nav-item-active-font-weight` | `var(--hub-ref-font-weight-semibold, 600)` |
+| `--hub-nav-item-active-indicator-color` | `var(--hub-nav-accent)` |
+| `--hub-nav-item-active-indicator-size` | `3px` |
 | `--hub-nav-item-disabled-color` | `var(--hub-sys-text-muted, #6c757d)` |
 | `--hub-nav-item-disabled-opacity` | `var(--hub-sys-opacity-disabled, 0.65)` |
+
+La barra indicadora del item activo (`--hub-nav-item-active-indicator-*`) solo se renderiza en navegaciones horizontales; las navegaciones verticales/sidebar se señalan únicamente con el tinte + el texto de acento.
 
 ## Dropdown y Caret
 
@@ -171,5 +179,5 @@ Importa los estilos de la librería y sobrescribe los tokens a nivel de componen
 | `--hub-nav-panel-header-font-weight` | `var(--hub-ref-font-weight-semibold, 600)` |
 | `--hub-nav-panel-header-padding-x` | `var(--hub-ref-space-3, 1rem)` |
 | `--hub-nav-panel-back-color` | `var(--hub-sys-text-primary, #212529)` |
-| `--hub-nav-panel-back-hover-bg` | `var(--hub-sys-state-hover-overlay, rgba(0, 0, 0, 0.04))` |
+| `--hub-nav-panel-back-hover-bg` | `var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.04))` |
 | `--hub-nav-panel-back-size` | `2rem` |

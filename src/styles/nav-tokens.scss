@@ -30,7 +30,16 @@
 	--hub-nav-scrollbar-thumb-radius: var(--hub-ref-radius-pill, 999px);
 
 	// ── Colours ──
-	--hub-nav-bg: var(--hub-sys-surface-page, #fff);
+	// Single semantic accent driving the hover/active affordances. Defaults to
+	// `primary` and is re-based per `variant` (see the loop below) or inline by
+	// the component, so the whole nav recolours from one hook.
+	--hub-nav-accent: var(--hub-sys-color-primary, #0d6efd);
+	// Subtle tint of the accent for the soft hover/active surfaces (derived, so it
+	// follows the accent — and the variant — automatically).
+	--hub-nav-accent-subtle: color-mix(in srgb, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff));
+	// The nav surface carries a faint wash of the accent, so each `variant`
+	// reads as a distinctly-themed surface (not just the active item).
+	--hub-nav-bg: color-mix(in srgb, var(--hub-nav-accent) 5%, var(--hub-sys-surface-page, #fff));
 	--hub-nav-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-nav-border-width: 1px;
@@ -51,14 +60,16 @@
 	--hub-nav-item-border-radius: var(--hub-ref-radius-sm, 0.25rem);
 	--hub-nav-item-transition: var(--hub-sys-transition-fast, 150ms ease);
 
-	// ── Item Hover ──
-	--hub-nav-item-hover-bg: var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.04));
-	--hub-nav-item-hover-color: var(--hub-sys-color-primary, #0d6efd);
+	// ── Item Hover ── (soft accent tint)
+	--hub-nav-item-hover-bg: color-mix(in srgb, var(--hub-nav-accent) 8%, var(--hub-sys-surface-page, #fff));
+	--hub-nav-item-hover-color: var(--hub-nav-accent);
 
-	// ── Item Active ──
-	--hub-nav-item-active-bg: var(--hub-sys-color-primary, #0d6efd);
-	--hub-nav-item-active-color: #fff;
+	// ── Item Active ── (soft tint + accent text + accent indicator bar)
+	--hub-nav-item-active-bg: var(--hub-nav-accent-subtle);
+	--hub-nav-item-active-color: var(--hub-nav-accent);
 	--hub-nav-item-active-font-weight: var(--hub-ref-font-weight-semibold, 600);
+	--hub-nav-item-active-indicator-color: var(--hub-nav-accent);
+	--hub-nav-item-active-indicator-size: 3px;
 
 	// ── Item Disabled ──
 	--hub-nav-item-disabled-color: var(--hub-sys-text-muted, #6c757d);
@@ -146,4 +157,19 @@
 	--hub-nav-panel-back-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-panel-back-hover-bg: var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.04));
 	--hub-nav-panel-back-size: 2rem;
+}
+
+// ──────────────────────────────────────────────────────
+// Semantic variant — `<hub-nav [variant]="…">`
+// Re-bases the single `--hub-nav-accent` per variant; the hover/active
+// affordances follow. Built-in variants pick up the exact `--hub-sys-color-*`
+// tints; any custom variant works via the inline accent the component sets.
+// ──────────────────────────────────────────────────────
+$hub-nav-variants: primary, success, danger, warning, info;
+
+@each $variant in $hub-nav-variants {
+	:host([data-variant='#{$variant}']),
+	.hub-nav[data-variant='#{$variant}'] {
+		--hub-nav-accent: var(--hub-sys-color-#{$variant});
+	}
 }

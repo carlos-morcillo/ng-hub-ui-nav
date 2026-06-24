@@ -68,6 +68,7 @@ This library is part of the **ng-hub-ui** ecosystem:
 - Router-aware active states with fragment and query param support.
 - Scroll-spy helpers for documentation pages and one-page layouts.
 - Sticky vertical navigation support.
+- Semantic `variant` accent system (`primary` / `success` / `danger` / `warning` / `info`, plus any custom accent) recolouring the hover/active affordances — mirrors `<hub-panels>`.
 - Full CSS variable theming via `--hub-nav-*` tokens.
 
 ## Installation
@@ -168,6 +169,7 @@ export class ExampleComponent {
 | `navClass` | `string` | `''` | Additional class applied to the internal `<nav>`. |
 | `itemTemplate` | `TemplateRef<unknown> \| null` | `null` | Optional custom item template. |
 | `autoOpenFromRoute` | `boolean` | `false` | Opens matching dropdowns/panels from the current route. |
+| `variant` | `'primary' \| 'success' \| 'danger' \| 'warning' \| 'info' \| string` | `'primary'` | Semantic accent for the hover/active affordances. Built-in values render with the design-system tints; any custom string resolves through `--hub-sys-color-<variant>`. |
 
 #### Outputs
 
@@ -234,14 +236,30 @@ The component exposes a complete set of `--hub-nav-*` tokens. See the full refer
 
 - [CSS Variables Reference](docs/css-variables-reference.md)
 
-Example:
+### Recolour the whole nav from a single accent
+
+The hover/active affordances and the nav surface all derive from one accent hook. Set it (or use the `variant` input) to re-theme the entire nav:
 
 ```css
 .my-sidebar {
 	--hub-nav-panel-width: 18rem;
+	/* Single recolour hook — the tinted active background, accent text, hover
+	   tint, indicator bar, and surface wash all follow this one accent. */
+	--hub-nav-accent: var(--hub-sys-color-success);
+	--hub-nav-dropdown-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.16);
+}
+```
+
+### Restore the legacy solid-fill look
+
+The default active item is now a soft accent tint + accent text. To restore the previous solid accent fill + white text (the pre-`22.1.0` look), override these tokens explicitly:
+
+```css
+.my-sidebar {
 	--hub-nav-item-active-bg: #0d6efd;
 	--hub-nav-item-active-color: #ffffff;
-	--hub-nav-dropdown-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.16);
+	--hub-nav-item-hover-bg: rgba(0, 0, 0, 0.04);
+	--hub-nav-bg: #ffffff;
 }
 ```
 

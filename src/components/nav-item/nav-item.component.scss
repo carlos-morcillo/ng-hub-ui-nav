@@ -38,9 +38,12 @@
 	}
 
 	&--active {
-		background-color: var(--hub-nav-item-active-bg, #0d6efd);
-		color: var(--hub-nav-item-active-color, #fff);
+		background-color: var(--hub-nav-item-active-bg);
+		color: var(--hub-nav-item-active-color);
 		font-weight: var(--hub-nav-item-active-font-weight, 600);
+		// Vertical / sidebar nav: the active item is signalled by the soft tint +
+		// accent text alone (no inline-start bar). A horizontal navbar adds a
+		// bottom indicator bar instead — see the override below.
 	}
 
 	&--disabled {
@@ -54,6 +57,12 @@
 		outline: 2px solid var(--hub-sys-focus-ring-color, rgba(13, 110, 253, 0.25));
 		outline-offset: -2px;
 	}
+}
+
+// Horizontal navbar: an accent indicator bar along the bottom edge of the
+// active item (the tabs-style underline). Vertical/sidebar nav has no bar.
+:host-context(.hub-nav--horizontal) .hub-nav-item__link--active {
+	box-shadow: inset 0 calc(var(--hub-nav-item-active-indicator-size, 3px) * -1) 0 var(--hub-nav-item-active-indicator-color);
 }
 
 // ── Compound dropdown row (route + caret split actions) ──
