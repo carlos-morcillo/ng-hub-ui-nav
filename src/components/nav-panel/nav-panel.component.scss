@@ -5,7 +5,7 @@
 	min-width: 0;
 	flex-shrink: 0;
 	position: relative;
-	z-index: var(--hub-nav-panel-z-index, 100);
+	z-index: var(--hub-nav-panel-z-index, 1000);
 	background: var(--hub-nav-panel-bg);
 	color: var(--hub-nav-panel-color);
 	border-inline-start: var(--hub-nav-panel-border-width) solid var(--hub-nav-panel-border-color);
@@ -81,7 +81,7 @@
 	border-radius: var(--hub-nav-item-border-radius, 0.25rem);
 	background: none;
 	color: var(--hub-nav-panel-back-color);
-	font-size: 1.25rem;
+	font-size: var(--hub-ref-font-size-lg, 1.25rem);
 	cursor: pointer;
 	transition: background-color var(--hub-nav-item-transition, 150ms ease);
 	flex-shrink: 0;
@@ -117,7 +117,7 @@
 
 	&::-webkit-scrollbar-thumb {
 		background-color: var(--hub-nav-scrollbar-thumb-color, transparent);
-		border-radius: var(--hub-nav-scrollbar-thumb-radius, 999px);
+		border-radius: var(--hub-nav-scrollbar-thumb-radius, 50rem);
 	}
 
 	&::-webkit-scrollbar-track {

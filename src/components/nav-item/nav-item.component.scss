@@ -29,7 +29,7 @@
 		color var(--hub-nav-item-transition, 150ms ease);
 	white-space: nowrap;
 	font-family: inherit;
-	line-height: 1.5;
+	line-height: var(--hub-ref-line-height-base, 1.5);
 	text-align: start;
 
 	&:hover:not(.hub-nav-item__link--disabled) {
@@ -148,7 +148,7 @@
 	justify-content: center;
 	padding: var(--hub-nav-badge-padding-y, 0.25em) var(--hub-nav-badge-padding-x, 0.5em);
 	font-size: var(--hub-nav-badge-font-size, 0.75rem);
-	font-weight: 600;
+	font-weight: var(--hub-ref-font-weight-semibold, 600);
 	line-height: 1;
 	color: var(--hub-nav-badge-color, #fff);
 	background-color: var(--hub-nav-badge-bg, #dc3545);

@@ -195,7 +195,7 @@ nav {
 
 	&::-webkit-scrollbar-thumb {
 		background-color: var(--hub-nav-scrollbar-thumb-color, transparent);
-		border-radius: var(--hub-nav-scrollbar-thumb-radius, 999px);
+		border-radius: var(--hub-nav-scrollbar-thumb-radius, 50rem);
 	}
 
 	&::-webkit-scrollbar-track {

@@ -27,7 +27,7 @@
 	--hub-nav-scrollbar-webkit-size: 0;
 	--hub-nav-scrollbar-thumb-color: transparent;
 	--hub-nav-scrollbar-track-color: transparent;
-	--hub-nav-scrollbar-thumb-radius: var(--hub-ref-radius-pill, 999px);
+	--hub-nav-scrollbar-thumb-radius: var(--hub-ref-radius-pill, 50rem);
 
 	// ── Colours ──
 	// Single semantic accent driving the hover/active affordances. Defaults to
@@ -76,7 +76,7 @@
 	--hub-nav-item-disabled-opacity: var(--hub-sys-opacity-disabled, 0.65);
 
 	// ── Dropdown ──
-	--hub-nav-dropdown-bg: var(--hub-sys-surface-elevated, #fff);
+	--hub-nav-dropdown-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-nav-dropdown-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-dropdown-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-nav-dropdown-border-radius: var(--hub-nav-item-border-radius, var(--hub-ref-radius-sm, 0.25rem));
@@ -95,8 +95,8 @@
 	--hub-nav-header-color: var(--hub-sys-text-muted, #6c757d);
 	--hub-nav-header-padding-x: var(--hub-ref-space-3, 1rem);
 	--hub-nav-header-padding-y: var(--hub-ref-space-1, 0.25rem);
-	--hub-nav-header-margin-top: var(--hub-ref-space-3, 0.75rem);
-	--hub-nav-header-margin-inline-start: var(--hub-ref-space-3, 0.75rem);
+	--hub-nav-header-margin-top: var(--hub-ref-space-3, 1rem);
+	--hub-nav-header-margin-inline-start: var(--hub-ref-space-3, 1rem);
 	--hub-nav-header-horizontal-padding-inline-start: 2rem;
 
 	// ── Separator ──
@@ -108,7 +108,7 @@
 	--hub-nav-badge-padding-x: 0.5em;
 	--hub-nav-badge-padding-y: 0.25em;
 	--hub-nav-badge-bg: var(--hub-sys-color-danger, #dc3545);
-	--hub-nav-badge-color: #fff;
+	--hub-nav-badge-color: var(--hub-ref-color-white, #fff);
 	--hub-nav-badge-border-radius: var(--hub-ref-radius-pill, 50rem);
 
 	// ── Toggler (hamburger) ──
@@ -137,7 +137,7 @@
 
 	// ── Panel mode (stacked side panels) ──
 	--hub-nav-panel-width: 16rem;
-	--hub-nav-panel-bg: var(--hub-sys-surface-elevated, #fff);
+	--hub-nav-panel-bg: var(--hub-sys-surface-elevated, #f8f9fa);
 	--hub-nav-panel-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-panel-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-nav-panel-border-width: 1px;
@@ -155,7 +155,7 @@
 
 	// ── Panel back button ──
 	--hub-nav-panel-back-color: var(--hub-sys-text-primary, #212529);
-	--hub-nav-panel-back-hover-bg: var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.04));
+	--hub-nav-panel-back-hover-bg: var(--hub-sys-state-hover-bg, rgba(0, 0, 0, 0.075));
 	--hub-nav-panel-back-size: 2rem;
 }
 
