@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.2.0] - 2026-06-26
+
+### Added
+
+- **Open-set accent variants.** `<hub-nav variant="…">` now accepts the full open accent set out of the box — `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `neutral`, `light`, `dark` (previously only the first five chromatic ones re-based the accent). Any other variant still works at runtime with no recompile: define a single `--hub-sys-color-<name>` (e.g. `:root { --hub-sys-color-brand: #ff6b00; }`) and `<hub-nav variant="brand">` derives the whole hover/active treatment from it, via the new open-set `[data-variant]` rule.
+- New derived accent roles `--hub-nav-accent-emphasis` (accent mixed over the theme ink) and `--hub-nav-accent-on` (the contrast colour for text sitting on the accent, a grayscale flip driven by the accent's lightness). Both follow the active accent/variant automatically.
+
+### Changed
+
+- Canonical `zindex` token names (BREAKING): `--hub-nav-dropdown-z-index` → `--hub-nav-dropdown-zindex`, `--hub-nav-mobile-z-index` → `--hub-nav-mobile-zindex`, `--hub-nav-panel-z-index` → `--hub-nav-panel-zindex` (no hyphen, matching the `--hub-sys-zindex-*` convention).
+- All accent derivations (`--hub-nav-accent-subtle`, `--hub-nav-bg`, `--hub-nav-item-hover-bg`) now interpolate in the **OKLCH** colour space (`color-mix(in oklch, …)`) instead of sRGB, for perceptually even tints across every accent. No token API change; tints shift very slightly.
+
 ## [22.1.1] - 2026-06-25
 
 ### Fixed

@@ -36,10 +36,17 @@
 	--hub-nav-accent: var(--hub-sys-color-primary, #0d6efd);
 	// Subtle tint of the accent for the soft hover/active surfaces (derived, so it
 	// follows the accent — and the variant — automatically).
-	--hub-nav-accent-subtle: color-mix(in srgb, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff));
+	--hub-nav-accent-subtle: color-mix(in oklch, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff));
+	// Strong/emphasis shade of the accent, mixed over the theme ink. Mirrors the
+	// design-system `-emphasis` role so the accent text reads with enough contrast.
+	--hub-nav-accent-emphasis: color-mix(in oklch, var(--hub-nav-accent) 80%, var(--hub-sys-color-ink, #212529));
+	// Contrast / on-color: text that sits ON the accent. Grayscale flip driven by
+	// the accent's own lightness (dark accents → white text, light accents → near
+	// black), recomputed at runtime with the accent — no second token needed.
+	--hub-nav-accent-on: oklch(from var(--hub-nav-accent) clamp(0, (0.62 - l) * 1000, 1) 0 h);
 	// The nav surface carries a faint wash of the accent, so each `variant`
 	// reads as a distinctly-themed surface (not just the active item).
-	--hub-nav-bg: color-mix(in srgb, var(--hub-nav-accent) 5%, var(--hub-sys-surface-page, #fff));
+	--hub-nav-bg: color-mix(in oklch, var(--hub-nav-accent) 5%, var(--hub-sys-surface-page, #fff));
 	--hub-nav-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-nav-border-width: 1px;
@@ -61,7 +68,7 @@
 	--hub-nav-item-transition: var(--hub-sys-transition-fast, 150ms ease);
 
 	// ── Item Hover ── (soft accent tint)
-	--hub-nav-item-hover-bg: color-mix(in srgb, var(--hub-nav-accent) 8%, var(--hub-sys-surface-page, #fff));
+	--hub-nav-item-hover-bg: color-mix(in oklch, var(--hub-nav-accent) 8%, var(--hub-sys-surface-page, #fff));
 	--hub-nav-item-hover-color: var(--hub-nav-accent);
 
 	// ── Item Active ── (soft tint + accent text + accent indicator bar)
@@ -83,7 +90,7 @@
 	--hub-nav-dropdown-shadow: var(--hub-sys-shadow, 0 0.5rem 1rem rgba(0, 0, 0, 0.15));
 	--hub-nav-dropdown-padding-y: var(--hub-ref-space-2, 0.5rem);
 	--hub-nav-dropdown-min-width: 12rem;
-	--hub-nav-dropdown-z-index: var(--hub-sys-zindex-dropdown, 1000);
+	--hub-nav-dropdown-zindex: var(--hub-sys-zindex-dropdown, 1000);
 
 	// ── Caret ──
 	--hub-nav-caret-size: 0.3rem;
@@ -123,7 +130,7 @@
 	--hub-nav-mobile-bg: var(--hub-sys-surface-page, #fff);
 	--hub-nav-mobile-color: var(--hub-sys-text-primary, #212529);
 	--hub-nav-mobile-width: 18rem;
-	--hub-nav-mobile-z-index: var(--hub-sys-zindex-fixed, 1030);
+	--hub-nav-mobile-zindex: var(--hub-sys-zindex-fixed, 1030);
 	--hub-nav-mobile-backdrop-bg: rgba(0, 0, 0, 0.5);
 	--hub-nav-mobile-transition: var(--hub-sys-transition-base, 300ms ease);
 
@@ -142,7 +149,7 @@
 	--hub-nav-panel-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-nav-panel-border-width: 1px;
 	--hub-nav-panel-shadow: var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
-	--hub-nav-panel-z-index: var(--hub-sys-zindex-dropdown, 1000);
+	--hub-nav-panel-zindex: var(--hub-sys-zindex-dropdown, 1000);
 	--hub-nav-panel-transition: transform var(--hub-sys-transition-base, 300ms ease);
 
 	// ── Panel header ──
@@ -165,7 +172,27 @@
 // affordances follow. Built-in variants pick up the exact `--hub-sys-color-*`
 // tints; any custom variant works via the inline accent the component sets.
 // ──────────────────────────────────────────────────────
-$hub-nav-variants: primary, success, danger, warning, info;
+
+// Open-set default — ANY variant the host application defines. The derived
+// roles (-subtle / -emphasis / -on, plus the nav surface wash and hover tint)
+// are re-mixed from the single `--hub-nav-accent` the component sets inline, so
+// a custom accent (e.g. `variant="brand"` backed by `--hub-sys-color-brand`)
+// interconnects with ONE CSS rule the user writes:
+//   :root { --hub-sys-color-brand: #ff6b00; }
+// No per-colour CSS is needed here for custom variants — only the open default.
+:host([data-variant]),
+.hub-nav[data-variant] {
+	--hub-nav-accent-subtle: color-mix(in oklch, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff));
+	--hub-nav-accent-emphasis: color-mix(in oklch, var(--hub-nav-accent) 80%, var(--hub-sys-color-ink, #212529));
+	--hub-nav-accent-on: oklch(from var(--hub-nav-accent) clamp(0, (0.62 - l) * 1000, 1) 0 h);
+	--hub-nav-bg: color-mix(in oklch, var(--hub-nav-accent) 5%, var(--hub-sys-surface-page, #fff));
+	--hub-nav-item-hover-bg: color-mix(in oklch, var(--hub-nav-accent) 8%, var(--hub-sys-surface-page, #fff));
+}
+
+// Built-in semantic variants — re-base the single accent to the exact
+// design-system `--hub-sys-color-<variant>` tint. The full open accent set:
+// primary, secondary, success, danger, warning, info, neutral, light, dark.
+$hub-nav-variants: primary, secondary, success, danger, warning, info, neutral, light, dark;
 
 @each $variant in $hub-nav-variants {
 	:host([data-variant='#{$variant}']),

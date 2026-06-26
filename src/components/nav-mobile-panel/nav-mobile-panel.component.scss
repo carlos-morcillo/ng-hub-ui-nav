@@ -2,14 +2,14 @@
 .hub-nav-mobile-panel__backdrop {
 	position: var(--hub-nav-mobile-overlay-position, fixed);
 	inset: 0;
-	z-index: calc(var(--hub-nav-mobile-z-index, 1030) - 1);
+	z-index: calc(var(--hub-nav-mobile-zindex, 1030) - 1);
 	background-color: var(--hub-nav-mobile-backdrop-bg, rgba(0, 0, 0, 0.5));
 }
 
 // ── Panel content ──
 .hub-nav-mobile-panel__content {
 	position: var(--hub-nav-mobile-overlay-position, fixed);
-	z-index: var(--hub-nav-mobile-z-index, 1030);
+	z-index: var(--hub-nav-mobile-zindex, 1030);
 	display: flex;
 	flex-direction: column;
 	background-color: var(--hub-nav-mobile-bg, var(--hub-sys-surface-elevated, #f8f9fa));

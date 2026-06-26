@@ -15,7 +15,7 @@
 // ── Dropdown panel (flyout / horizontal dropdown) ──
 .hub-nav-dropdown {
 	position: absolute;
-	z-index: var(--hub-nav-dropdown-z-index, 1000);
+	z-index: var(--hub-nav-dropdown-zindex, 1000);
 	min-width: var(--hub-nav-dropdown-min-width, 12rem);
 	background-color: var(--hub-nav-dropdown-bg, #fff);
 	color: var(--hub-nav-dropdown-color, #212529);

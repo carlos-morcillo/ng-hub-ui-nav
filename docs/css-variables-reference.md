@@ -100,7 +100,7 @@ The active indicator bar (`--hub-nav-item-active-indicator-*`) renders only on h
 | `--hub-nav-dropdown-shadow` | `var(--hub-sys-shadow-md, 0 0.5rem 1rem rgba(0, 0, 0, 0.15))` |
 | `--hub-nav-dropdown-padding-y` | `var(--hub-ref-space-2, 0.5rem)` |
 | `--hub-nav-dropdown-min-width` | `12rem` |
-| `--hub-nav-dropdown-z-index` | `var(--hub-sys-z-index-dropdown, 1000)` |
+| `--hub-nav-dropdown-zindex` | `var(--hub-sys-zindex-dropdown, 1000)` |
 | `--hub-nav-caret-size` | `0.3rem` |
 | `--hub-nav-caret-color` | `currentColor` |
 
@@ -145,7 +145,7 @@ The active indicator bar (`--hub-nav-item-active-indicator-*`) renders only on h
 | `--hub-nav-mobile-bg` | `var(--hub-sys-surface-page, #fff)` |
 | `--hub-nav-mobile-color` | `var(--hub-sys-text-primary, #212529)` |
 | `--hub-nav-mobile-width` | `18rem` |
-| `--hub-nav-mobile-z-index` | `var(--hub-sys-z-index-fixed, 1030)` |
+| `--hub-nav-mobile-zindex` | `var(--hub-sys-zindex-fixed, 1030)` |
 | `--hub-nav-mobile-backdrop-bg` | `rgba(0, 0, 0, 0.5)` |
 | `--hub-nav-mobile-transition` | `var(--hub-sys-transition-base, 300ms ease)` |
 | `--hub-nav-mobile-accordion-gap` | `component-defined` |
@@ -170,7 +170,7 @@ The active indicator bar (`--hub-nav-item-active-indicator-*`) renders only on h
 | `--hub-nav-panel-border-color` | `var(--hub-sys-border-color-default, #dee2e6)` |
 | `--hub-nav-panel-border-width` | `1px` |
 | `--hub-nav-panel-shadow` | `var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075))` |
-| `--hub-nav-panel-z-index` | `var(--hub-sys-z-index-dropdown, 1000)` |
+| `--hub-nav-panel-zindex` | `var(--hub-sys-zindex-dropdown, 1000)` |
 | `--hub-nav-panel-transition` | `transform var(--hub-sys-transition-base, 300ms ease)` |
 | `--hub-nav-panel-header-height` | `3rem` |
 | `--hub-nav-panel-header-bg` | `var(--hub-sys-surface-page, #fff)` |

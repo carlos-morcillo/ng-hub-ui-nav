@@ -5,7 +5,7 @@
 	min-width: 0;
 	flex-shrink: 0;
 	position: relative;
-	z-index: var(--hub-nav-panel-z-index, 1000);
+	z-index: var(--hub-nav-panel-zindex, 1000);
 	background: var(--hub-nav-panel-bg);
 	color: var(--hub-nav-panel-color);
 	border-inline-start: var(--hub-nav-panel-border-width) solid var(--hub-nav-panel-border-color);
