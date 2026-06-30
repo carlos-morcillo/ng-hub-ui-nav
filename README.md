@@ -68,6 +68,7 @@ This library is part of the **ng-hub-ui** ecosystem:
 - Router-aware active states with fragment and query param support.
 - Scroll-spy helpers for documentation pages and one-page layouts.
 - Sticky vertical navigation support.
+- **Tooltip on truncated labels** — long item labels are clipped with an ellipsis (the standard sidebar behaviour) and reveal their full text on hover, automatically and only when truncated (via `ng-hub-ui-utils`' `[hubOverflowTooltip]`). The tooltip is **agnostic** — it defaults to the hub-ui tooltip but is swappable with `provideHubTooltip(...)`. Requires `ng-hub-ui-utils >= 22.6.0` and the tooltip styles (`@use 'ng-hub-ui-utils/styles/tooltip';`). Tip: control the sidebar width with `--hub-nav-panel-width`.
 - Semantic `variant` accent system (`primary` / `success` / `danger` / `warning` / `info`, plus any custom accent) recolouring the hover/active affordances — mirrors `<hub-panels>`.
 - Full CSS variable theming via `--hub-nav-*` tokens.
 

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.3.0] - 2026-06-29
+
+### Added
+
+- **Tooltip on truncated item labels.** A nav item whose label is clipped with an ellipsis (the standard sidebar/menu behaviour) now reveals its full text on hover — applied automatically through `ng-hub-ui-utils`' new `[hubOverflowTooltip]` directive, only when the label actually overflows. The tooltip is **agnostic**: it uses the hub-ui tooltip by default but can be swapped for any implementation with `provideHubTooltip(...)`. No API changes; requires `ng-hub-ui-utils >= 22.6.0` and the tooltip styles (`@use 'ng-hub-ui-utils/styles/tooltip';`).
+
 ## [22.2.0] - 2026-06-26
 
 ### Added
