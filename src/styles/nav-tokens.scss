@@ -34,9 +34,10 @@
 	// `primary` and is re-based per `variant` (see the loop below) or inline by
 	// the component, so the whole nav recolours from one hook.
 	--hub-nav-accent: var(--hub-sys-color-primary, #0d6efd);
-	// Subtle tint of the accent for the soft hover/active surfaces (derived, so it
-	// follows the accent — and the variant — automatically).
-	--hub-nav-accent-subtle: color-mix(in oklch, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff));
+	// Subtle tint of the accent for the soft hover/active surfaces (derived with
+	// the canonical design-system formula, so it follows the accent — and the
+	// variant — automatically, matching the ds `-subtle` tints exactly).
+	--hub-nav-accent-subtle: color-mix(in oklch, var(--hub-nav-accent) 12%, var(--hub-sys-surface-page, #ffffff));
 	// Strong/emphasis shade of the accent, mixed over the theme ink. Mirrors the
 	// design-system `-emphasis` role so the accent text reads with enough contrast.
 	--hub-nav-accent-emphasis: color-mix(in oklch, var(--hub-nav-accent) 80%, var(--hub-sys-color-ink, #212529));
@@ -65,7 +66,7 @@
 	--hub-nav-item-font-size: var(--hub-ref-font-size-base, 1rem);
 	--hub-nav-item-font-weight: var(--hub-ref-font-weight-base, 400);
 	--hub-nav-item-border-radius: var(--hub-ref-radius-sm, 0.25rem);
-	--hub-nav-item-transition: var(--hub-sys-transition-fast, 150ms ease);
+	--hub-nav-item-transition: var(--hub-sys-transition-fast, all 0.15s ease-in-out);
 
 	// ── Item Hover ── (soft accent tint)
 	--hub-nav-item-hover-bg: color-mix(in oklch, var(--hub-nav-accent) 8%, var(--hub-sys-surface-page, #fff));
@@ -132,14 +133,18 @@
 	--hub-nav-mobile-width: 18rem;
 	--hub-nav-mobile-zindex: var(--hub-sys-zindex-fixed, 1030);
 	--hub-nav-mobile-backdrop-bg: rgba(0, 0, 0, 0.5);
-	--hub-nav-mobile-transition: var(--hub-sys-transition-base, 300ms ease);
+	--hub-nav-mobile-transition: var(--hub-sys-transition-base, all 0.2s ease-in-out);
 
 	// ── Accordion mode (vertical expand) ──
 	--hub-nav-accordion-indent: var(--hub-ref-space-3, 1rem);
-	--hub-nav-accordion-transition: var(--hub-sys-transition-collapse, 350ms ease);
+	// Duration + easing of the expand ANIMATION. It intentionally does NOT
+	// reference `--hub-sys-transition-collapse`: the ds value is a transition
+	// shorthand carrying a property name (`height 0.35s ease`), which is invalid
+	// inside `animation` and would silently disable it. Timing matches ds.
+	--hub-nav-accordion-transition: 0.35s ease;
 
 	// ── Icon ──
-	--hub-nav-icon-size: var(--hub-ref-icon-size, 1.25rem);
+	--hub-nav-icon-size: var(--hub-ref-icon-size, 1em);
 	--hub-nav-icon-gap: var(--hub-ref-space-2, 0.5rem);
 
 	// ── Panel mode (stacked side panels) ──
@@ -150,7 +155,9 @@
 	--hub-nav-panel-border-width: 1px;
 	--hub-nav-panel-shadow: var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
 	--hub-nav-panel-zindex: var(--hub-sys-zindex-dropdown, 1000);
-	--hub-nav-panel-transition: transform var(--hub-sys-transition-base, 300ms ease);
+	// Complete `transition` value (the ds base token is already `all …`; a
+	// `transform` prefix would make the resolved declaration invalid).
+	--hub-nav-panel-transition: var(--hub-sys-transition-base, all 0.2s ease-in-out);
 
 	// ── Panel header ──
 	--hub-nav-panel-header-height: 3rem;
@@ -182,7 +189,7 @@
 // No per-colour CSS is needed here for custom variants — only the open default.
 :host([data-variant]),
 .hub-nav[data-variant] {
-	--hub-nav-accent-subtle: color-mix(in oklch, var(--hub-nav-accent) 14%, var(--hub-sys-surface-page, #fff));
+	--hub-nav-accent-subtle: color-mix(in oklch, var(--hub-nav-accent) 12%, var(--hub-sys-surface-page, #ffffff));
 	--hub-nav-accent-emphasis: color-mix(in oklch, var(--hub-nav-accent) 80%, var(--hub-sys-color-ink, #212529));
 	--hub-nav-accent-on: oklch(from var(--hub-nav-accent) clamp(0, (0.62 - l) * 1000, 1) 0 h);
 	--hub-nav-bg: color-mix(in oklch, var(--hub-nav-accent) 5%, var(--hub-sys-surface-page, #fff));

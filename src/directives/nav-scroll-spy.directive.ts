@@ -1,9 +1,11 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
 	AfterViewInit,
 	Directive,
 	ElementRef,
 	NgZone,
 	OnDestroy,
+	PLATFORM_ID,
 	computed,
 	effect,
 	inject,
@@ -36,6 +38,9 @@ export class HubNavScrollSpyDirective implements AfterViewInit, OnDestroy {
 
 	private readonly el = inject(ElementRef<HTMLElement>);
 	private readonly zone = inject(NgZone);
+
+	/** Section tracking relies on browser-only APIs (rAF, IntersectionObserver); inert on the server. */
+	private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
 	private observer: IntersectionObserver | null = null;
 	private activeId = signal<string | null>(null);
@@ -98,6 +103,10 @@ export class HubNavScrollSpyDirective implements AfterViewInit, OnDestroy {
 	}
 
 	private scheduleInit(): void {
+		if (!this.isBrowser) {
+			return;
+		}
+
 		this.zone.runOutsideAngular(() => {
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {

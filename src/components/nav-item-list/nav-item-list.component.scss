@@ -29,7 +29,7 @@
 // ── Accordion panel (inline children) ──
 .hub-nav-accordion {
 	overflow: hidden;
-	animation: hubNavAccordionExpand var(--hub-nav-accordion-transition, 350ms ease) forwards;
+	animation: hubNavAccordionExpand var(--hub-nav-accordion-transition, 0.35s ease) forwards;
 }
 
 @keyframes hubNavAccordionExpand {

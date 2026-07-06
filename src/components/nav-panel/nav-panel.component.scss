@@ -83,7 +83,7 @@
 	color: var(--hub-nav-panel-back-color);
 	font-size: var(--hub-ref-font-size-lg, 1.25rem);
 	cursor: pointer;
-	transition: background-color var(--hub-nav-item-transition, 150ms ease);
+	transition: var(--hub-nav-item-transition, all 0.15s ease-in-out);
 	flex-shrink: 0;
 
 	&:hover {

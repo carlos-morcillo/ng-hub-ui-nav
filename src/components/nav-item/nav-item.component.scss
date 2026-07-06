@@ -25,8 +25,9 @@
 	border: 0;
 	border-radius: var(--hub-nav-item-border-radius, 0.25rem);
 	cursor: pointer;
-	transition: background-color var(--hub-nav-item-transition, 150ms ease),
-		color var(--hub-nav-item-transition, 150ms ease);
+	// The token is a complete `transition` value (ds shape: `all 0.15s ease-in-out`);
+	// composing it after a property name would make the declaration invalid.
+	transition: var(--hub-nav-item-transition, all 0.15s ease-in-out);
 	white-space: nowrap;
 	font-family: inherit;
 	line-height: var(--hub-ref-line-height-base, 1.5);
@@ -94,8 +95,9 @@
 	border-start-end-radius: var(--hub-nav-item-border-radius, 0.25rem);
 	border-end-end-radius: var(--hub-nav-item-border-radius, 0.25rem);
 	cursor: pointer;
-	transition: background-color var(--hub-nav-item-transition, 150ms ease),
-		color var(--hub-nav-item-transition, 150ms ease);
+	// The token is a complete `transition` value (ds shape: `all 0.15s ease-in-out`);
+	// composing it after a property name would make the declaration invalid.
+	transition: var(--hub-nav-item-transition, all 0.15s ease-in-out);
 
 	&:hover:not(.hub-nav-item__caret-button--disabled) {
 		background-color: var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04));
@@ -129,8 +131,8 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: var(--hub-nav-icon-size, 1.25rem);
-	height: var(--hub-nav-icon-size, 1.25rem);
+	width: var(--hub-nav-icon-size, 1em);
+	height: var(--hub-nav-icon-size, 1em);
 	flex-shrink: 0;
 }
 
@@ -165,7 +167,7 @@
 	border-top: var(--hub-nav-caret-size, 0.3rem) solid var(--hub-nav-caret-color, currentColor);
 	border-right: var(--hub-nav-caret-size, 0.3rem) solid transparent;
 	border-left: var(--hub-nav-caret-size, 0.3rem) solid transparent;
-	transition: transform var(--hub-nav-item-transition, 150ms ease);
+	transition: var(--hub-nav-item-transition, all 0.15s ease-in-out);
 	flex-shrink: 0;
 }
 

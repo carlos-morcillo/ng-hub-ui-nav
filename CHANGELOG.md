@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.4.0] - 2026-07-02
+
+### Changed
+
+- `--hub-nav-accent-subtle` now uses the canonical design-system derivation — `color-mix(in oklch, var(--hub-nav-accent) 12%, var(--hub-sys-surface-page, #ffffff))` (was a `14%` mix) — in the base tokens and in the open-set `[data-variant]` rule. The subtle tint now matches the ds `-subtle` families exactly, so custom accents re-derive the full role family at runtime with the same values a built-in variant gets.
+
+### Fixed
+
+- **SSR/prerender no longer logs `requestAnimationFrame is not defined`.** `HubNavScrollSpyDirective` scheduled its `IntersectionObserver` setup through `requestAnimationFrame` on every platform; on the server (Angular prerender/SSR) that API does not exist and every route using the scroll spy logged a `ReferenceError`. The directive is now inert outside the browser (`isPlatformBrowser` guard in `scheduleInit`) — section tracking only ever ran client-side anyway.
+- **Nav transitions actually run when the ds tokens are loaded.** The ds transition tokens are complete `transition` values (`all 0.15s ease-in-out`, `all 0.2s ease-in-out`), but the components composed them after a property name (`transition: background-color var(--hub-nav-item-transition)`), producing an invalid declaration and silently disabling every item/caret/panel/mobile transition whenever ds was present. All consumers now use the token as the full transition value.
+- The accordion expand animation no longer references `--hub-sys-transition-collapse`: the ds value (`height 0.35s ease`) is a transition shorthand carrying a property name, which is invalid inside `animation` and silently disabled the expand animation with ds loaded. `--hub-nav-accordion-transition` is now a plain `0.35s ease` (same timing as ds).
+- `--hub-nav-panel-transition` no longer prefixes `transform` to `--hub-sys-transition-base` (invalid once the token resolves to `all 0.2s ease-in-out`); it now resolves to the token directly.
+- D1 fallbacks aligned with the actual ds values (they only apply when the ds tokens are not loaded): `--hub-ref-icon-size` → `1em` (was `1.25rem`, also in the icon width/height usage fallbacks), `--hub-sys-transition-fast` → `all 0.15s ease-in-out` (was `150ms ease`), `--hub-sys-transition-base` → `all 0.2s ease-in-out` (was `300ms ease`).
+- Docs: `docs/css-variables-reference.md` default values resynchronized with the actual code declarations (now guarded by the repo-level `tokens-parity` check F).
+
 ## [22.3.0] - 2026-06-29
 
 ### Added
