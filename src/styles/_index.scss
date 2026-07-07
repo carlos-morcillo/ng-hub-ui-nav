@@ -1,0 +1,6 @@
+// ── Public SCSS API for ng-hub-ui-nav ────────────────────────────────────────
+//
+//   @use 'ng-hub-ui-nav/styles' as *;
+//
+// Forwards the `hub-nav-theme(...)` one-call theming mixin.
+@forward 'nav-theme';

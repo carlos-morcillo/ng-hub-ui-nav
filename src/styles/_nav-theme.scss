@@ -1,0 +1,84 @@
+// ─────────────────────────────────────────────────────────────────────────
+// hub-nav-theme — one-call token theming for `<hub-nav>`
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Override the most useful `--hub-nav-*` design tokens in a single include. Every
+// parameter is OPTIONAL and defaults to `null`: only the parameters you pass are
+// emitted, so the rest keep their defaults. For any token not exposed here, set the
+// `--hub-nav-*` custom property directly — this mixin is sugar for the common knobs,
+// not a replacement for the full token surface.
+//
+// `$accent` feeds the single `--hub-nav-accent` slot; the component derives the
+// `-emphasis` / `-subtle` / `-on` family from it at runtime, so one colour re-tones
+// the active indicator and hover accents. Pass any value `resolveHubAccent` accepts
+// (a semantic name, a registered accent, or a literal `#hex` / `rgb()` / `oklch()`).
+//
+// @example
+//
+//   @use 'ng-hub-ui-nav/styles' as *;
+//
+//   .app-shell nav {
+//       @include hub-nav-theme($accent: var(--hub-sys-color-brand), $item-border-radius: 0.5rem);
+//   }
+//
+// scss-docs-start hub-nav-theme
+@mixin hub-nav-theme(
+	$accent: null,             // --hub-nav-accent (active indicator + hover accents)
+	$bg: null,                 // --hub-nav-bg (bar surface)
+	$color: null,              // --hub-nav-color (bar text)
+	$border-color: null,       // --hub-nav-border-color
+	$gap: null,                // --hub-nav-gap (spacing between items)
+	$padding-x: null,          // --hub-nav-padding-x
+	$padding-y: null,          // --hub-nav-padding-y
+	$item-color: null,         // --hub-nav-item-color
+	$item-active-bg: null,     // --hub-nav-item-active-bg
+	$item-active-color: null,  // --hub-nav-item-active-color
+	$item-border-radius: null, // --hub-nav-item-border-radius
+	$item-font-size: null,     // --hub-nav-item-font-size
+	$item-padding-x: null,     // --hub-nav-item-padding-x
+	$item-padding-y: null      // --hub-nav-item-padding-y
+) {
+	@if $accent != null {
+		--hub-nav-accent: #{$accent};
+	}
+	@if $bg != null {
+		--hub-nav-bg: #{$bg};
+	}
+	@if $color != null {
+		--hub-nav-color: #{$color};
+	}
+	@if $border-color != null {
+		--hub-nav-border-color: #{$border-color};
+	}
+	@if $gap != null {
+		--hub-nav-gap: #{$gap};
+	}
+	@if $padding-x != null {
+		--hub-nav-padding-x: #{$padding-x};
+	}
+	@if $padding-y != null {
+		--hub-nav-padding-y: #{$padding-y};
+	}
+	@if $item-color != null {
+		--hub-nav-item-color: #{$item-color};
+	}
+	@if $item-active-bg != null {
+		--hub-nav-item-active-bg: #{$item-active-bg};
+	}
+	@if $item-active-color != null {
+		--hub-nav-item-active-color: #{$item-active-color};
+	}
+	@if $item-border-radius != null {
+		--hub-nav-item-border-radius: #{$item-border-radius};
+	}
+	@if $item-font-size != null {
+		--hub-nav-item-font-size: #{$item-font-size};
+	}
+	@if $item-padding-x != null {
+		--hub-nav-item-padding-x: #{$item-padding-x};
+	}
+	@if $item-padding-y != null {
+		--hub-nav-item-padding-y: #{$item-padding-y};
+	}
+}
+// scss-docs-end hub-nav-theme

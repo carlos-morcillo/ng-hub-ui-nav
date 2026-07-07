@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.6.0] - 2026-07-07
+
+### Added
+
+- **`hub-nav-theme(...)` SCSS mixin** — one-call token theming for `<hub-nav>`. `$accent` feeds the single `--hub-nav-accent` slot (the component derives the `-emphasis` / `-subtle` / `-on` family from it), alongside the bar surface (`$bg`, `$color`, `$border-color`, `$gap`, `$padding-x/y`) and the item appearance (`$item-color`, `$item-active-bg`, `$item-active-color`, `$item-border-radius`, `$item-font-size`, `$item-padding-x/y`). Every parameter is null-defaulted and additive; for any token not exposed, set the `--hub-nav-*` custom property directly.
+
+### Changed
+
+- **Packaging — the library now ships its SCSS at `/styles`.** `src/styles` is emitted to `dist/nav/styles`, exposing `hub-nav-theme` as a first-class package entry: `@use 'ng-hub-ui-nav/styles' as *;`.
+
 ## [22.5.0] - 2026-07-07
 
 ### Changed
