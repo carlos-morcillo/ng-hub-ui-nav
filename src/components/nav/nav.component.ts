@@ -17,6 +17,7 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subscription, filter } from 'rxjs';
+import { resolveHubAccent } from 'ng-hub-ui-utils';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavConfig } from '../../models/nav-config.model';
 import { HubNavPanelEvent } from '../../models/nav-events.model';
@@ -102,24 +103,24 @@ export class HubNavComponent implements OnInit, OnDestroy {
 	readonly autoOpenFromRoute = input<boolean>(false);
 
 	/**
-	 * Semantic accent applied to the hover/active affordances of the nav items.
-	 * The built-in values (`primary` / `success` / `danger` / `warning` / `info`)
-	 * render with the design-system tints; any other string is also accepted —
-	 * the nav reads `--hub-sys-color-<variant>` from the host application, so a
-	 * custom accent palette interconnects with no changes to this library.
+	 * Accent applied to the hover/active affordances of the nav items. Accepts
+	 * ANY colour: a semantic/built-in name (`primary` / `success` / `danger` /
+	 * `warning` / `info`), a custom registered accent name, a CSS named colour,
+	 * or a literal `#hex` / `rgb()` / `oklch()` / `var()`. Bareword names resolve
+	 * to the design-system `--hub-sys-color-<variant>` token (falling back to the
+	 * word itself as a raw colour); literals are passed through unchanged.
 	 * Defaults to `primary` when omitted.
 	 */
 	readonly variant = input<'primary' | 'success' | 'danger' | 'warning' | 'info' | (string & {}) | undefined>(undefined);
 
 	/**
-	 * Inline accent fed to the nav styles: `var(--hub-sys-color-<variant>)` for the
-	 * active variant, or `null` to keep the `primary` default. Keeps the variant
-	 * set open — any accent token the host app defines is picked up by name.
+	 * Inline accent fed to the nav styles. A bareword (semantic name / registered
+	 * accent / CSS named colour) resolves to `var(--hub-sys-color-<variant>, <variant>)`
+	 * — the ds token with the word itself as a raw fallback — while a literal
+	 * `#hex` / `rgb()` / `oklch()` / `var()` is passed through untouched. Returns
+	 * `null` when no variant is set, keeping the `primary` default.
 	 */
-	readonly groupAccent = computed(() => {
-		const variant = this.variant();
-		return variant ? `var(--hub-sys-color-${variant})` : null;
-	});
+	readonly groupAccent = computed(() => resolveHubAccent(this.variant()));
 
 	/** Start slot template projected via `hubNavStart` directive. */
 	private readonly startDirective = contentChild(HubNavStartDirective);

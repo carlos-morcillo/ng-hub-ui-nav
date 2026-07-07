@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output, computed, TemplateRef, HostListener, ElementRef, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, input, output, computed, TemplateRef, ElementRef, inject } from '@angular/core';
 import { HubNavDropdownRenderMode } from '../../models/nav-config.model';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavPanelState } from '../../models/nav-panel-state.model';
@@ -26,7 +26,8 @@ import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.componen
 		'[style.width]': 'panelWidth()',
 		role: 'navigation',
 		'[attr.aria-label]': 'ariaLabel()',
-		tabindex: '-1'
+		tabindex: '-1',
+		'(keydown)': 'onKeyDown($event)'
 	},
 	templateUrl: './nav-panel.component.html',
 	styleUrl: './nav-panel.component.scss'
@@ -86,7 +87,6 @@ export class HubNavPanelComponent {
 	 *
 	 * @param event - The keyboard event.
 	 */
-	@HostListener('keydown', ['$event'])
 	onKeyDown(event: KeyboardEvent): void {
 		switch (event.key) {
 			case 'Escape':

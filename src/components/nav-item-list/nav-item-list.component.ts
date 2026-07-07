@@ -6,7 +6,6 @@ import {
 	inject,
 	computed,
 	ElementRef,
-	HostListener,
 	OnDestroy,
 	OnInit,
 	signal,
@@ -43,7 +42,8 @@ type HubNavOverlayPlacement = 'root-dropdown' | 'flyout';
 	host: {
 		class: 'hub-nav-item-list',
 		'[class.hub-nav-item-list--force-accordion]': 'forceAccordionMode()',
-		'[attr.role]': 'depth() === 0 ? "menubar" : "menu"'
+		'[attr.role]': 'depth() === 0 ? "menubar" : "menu"',
+		'(keydown)': 'onKeyDown($event)'
 	},
 	templateUrl: './nav-item-list.component.html',
 	styleUrl: './nav-item-list.component.scss'
@@ -528,7 +528,6 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 	 *
 	 * @param event - The keyboard event.
 	 */
-	@HostListener('keydown', ['$event'])
 	onKeyDown(event: KeyboardEvent): void {
 		const items = this.getFocusableItems();
 		const currentIndex = this.getCurrentFocusIndex(items);
