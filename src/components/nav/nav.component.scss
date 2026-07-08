@@ -9,6 +9,11 @@ nav {
 	background-color: var(--hub-nav-bg, #fff);
 	color: var(--hub-nav-color, #212529);
 	border: var(--hub-nav-border-width, 1px) var(--hub-nav-border-style, solid) var(--hub-nav-border-color, #dee2e6);
+	// Container radius + elevation. Default to 0 / none so existing bars are
+	// unchanged; a consumer can turn the whole nav into a floating card
+	// (e.g. a sidebar rail) by setting these two tokens.
+	border-radius: var(--hub-nav-border-radius, 0);
+	box-shadow: var(--hub-nav-box-shadow, none);
 	font-family: inherit;
 }
 
@@ -59,6 +64,9 @@ nav {
 	min-height: auto;
 	flex-direction: row;
 	align-items: center;
+	// Brand/start slot to the leading edge, toggler pushed to the trailing edge
+	// (the natural collapsed top-bar layout). Overridable via the token.
+	justify-content: var(--hub-nav-collapsed-justify, space-between);
 	flex-wrap: nowrap;
 	gap: var(--hub-nav-gap, 0.25rem);
 	padding: var(--hub-nav-padding-y, 0.5rem) var(--hub-nav-padding-x, 1rem);
@@ -99,12 +107,15 @@ nav {
 		display: flex;
 		flex-direction: column;
 		/*
-		 * Keep a stable base sidebar width so root items do not collapse when
-		 * panels are added.
+		 * Fill the host container by default — a plain vertical sidebar takes
+		 * the width of its rail, not a fixed panel width. `--hub-nav-panel-width`
+		 * is pinned onto the primary column ONLY when drill-down panels are
+		 * present (`.hub-nav--has-panels`, rule below), so root items don't
+		 * collapse as panels push in.
 		 */
-		flex: 0 0 var(--hub-nav-panel-width, 16rem);
-		width: var(--hub-nav-panel-width, 16rem);
-		min-width: var(--hub-nav-panel-width, 16rem);
+		flex: 1 1 auto;
+		width: 100%;
+		min-width: 0;
 
 		> hub-nav-item-list {
 			display: flex;
@@ -133,6 +144,14 @@ nav {
 		width: auto;
 		min-width: 0;
 	}
+}
+
+// With drill-down panels present, pin the primary column to a stable width so
+// the root items don't collapse as panels push in from the side.
+:host(.hub-nav--vertical.hub-nav--has-panels) .hub-nav__main-and-panels > .hub-nav__primary-column {
+	flex: 0 0 var(--hub-nav-panel-width, 16rem);
+	width: var(--hub-nav-panel-width, 16rem);
+	min-width: var(--hub-nav-panel-width, 16rem);
 }
 
 /* Horizontal desktop row 1: start | root items | end */

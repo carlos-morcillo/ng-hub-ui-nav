@@ -24,6 +24,12 @@ export interface HubNavItemTemplateContext {
 export interface HubNavStartTemplateContext {
 	/** Whether the navigation menu is currently collapsed (mobile viewport). */
 	collapsed: boolean;
+	/**
+	 * Whether this render is inside the offcanvas mobile drawer (as opposed to
+	 * the slim collapsed top bar, which also gets `collapsed: true`). Lets
+	 * consumers show a full header in the drawer while keeping the top bar slim.
+	 */
+	inDrawer?: boolean;
 }
 
 /**
@@ -32,4 +38,10 @@ export interface HubNavStartTemplateContext {
 export interface HubNavEndTemplateContext {
 	/** Whether the navigation menu is currently collapsed (mobile viewport). */
 	collapsed: boolean;
+	/**
+	 * Whether this render is inside the offcanvas mobile drawer (as opposed to
+	 * the slim collapsed top bar, which also gets `collapsed: true`). Lets
+	 * consumers show a full footer in the drawer while keeping the top bar slim.
+	 */
+	inDrawer?: boolean;
 }

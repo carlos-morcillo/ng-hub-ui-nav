@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.7.0] - 2026-07-08
+
+### Added
+
+- **Mobile drawer now honours the full nav template surface.** The offcanvas mobile panel forwards the `hubNavItemTemplate` (custom item content — icons, badges, rich markup) **and** projects the `hubNavStart` / `hubNavEnd` slots (brand header / footer), so the drawer matches the desktop nav instead of rendering bare items. New `HubNavMobilePanelComponent` inputs: `itemTemplate`, `startTemplate`, `endTemplate`.
+- **`inDrawer` slot context.** `HubNavStartTemplateContext` / `HubNavEndTemplateContext` gain an optional `inDrawer` flag (true only inside the offcanvas drawer). Both the collapsed top bar and the drawer are `collapsed: true`; `inDrawer` lets consumers render a full header/footer in the drawer while keeping the collapsed top bar slim.
+- **`--hub-nav-collapsed-justify`** — justify-content of the collapsed top-bar row (default `space-between`, so the brand/start slot sits at the leading edge and the toggler at the trailing edge).
+- **`--hub-nav-border-radius` / `--hub-nav-box-shadow`** — container radius + elevation (default `0` / `none`), so the whole nav can be turned into a floating card (e.g. a sidebar rail) purely through tokens.
+
+### Fixed
+
+- **Vertical primary column no longer forces the panel width when there are no panels.** It previously pinned `--hub-nav-panel-width` (16rem) on the primary column always, overflowing a narrower rail. It now fills its container (`flex: 1 1 auto; width: 100%; min-width: 0`) by default, and only pins the fixed width under the new `.hub-nav--has-panels` host class (drill-down panels present). The `hubNavStart` / `hubNavEnd` slots therefore span the true container width.
+
+### Changed
+
+- **BREAKING — the semantic accent input `variant` is renamed to `color`**, for consistency with the rest of the hub-ui family (`<hub-button>`, `<hub-badge>`, `<hub-metrics>`, `<hub-milestone>`, all `color`). Its values are colours (`primary` / `success` / `danger` / … / any registered accent or literal), so `color` is the accurate name. Migration: `<hub-nav variant="primary">` → `<hub-nav color="primary">`. The internal `data-variant` attribute and the `:host([data-variant='…'])` token rules are unchanged.
+
 ## [22.6.0] - 2026-07-07
 
 ### Added

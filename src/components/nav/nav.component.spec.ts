@@ -158,15 +158,15 @@ describe('HubNavComponent', () => {
 		});
 	});
 
-	describe('accent (variant) resolution', () => {
+	describe('accent (color) resolution', () => {
 		it('should resolve a semantic name to the ds token with a raw fallback', () => {
-			componentRef.setInput('variant', 'primary');
+			componentRef.setInput('color', 'primary');
 			fixture.detectChanges();
 			expect(component.groupAccent()).toBe('var(--hub-sys-color-primary, primary)');
 		});
 
 		it('should pass a literal hex colour through unchanged', () => {
-			componentRef.setInput('variant', '#ff0000');
+			componentRef.setInput('color', '#ff0000');
 			fixture.detectChanges();
 			expect(component.groupAccent()).toBe('#ff0000');
 		});

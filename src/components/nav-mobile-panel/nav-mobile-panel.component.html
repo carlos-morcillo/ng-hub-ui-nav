@@ -18,15 +18,36 @@
 			</button>
 		</div>
 
+		<!-- Start slot (brand / header) — mirrors the desktop nav -->
+		@if (startTemplate()) {
+			<div class="hub-nav-slot hub-nav-slot--start hub-nav-mobile-panel__start">
+				<ng-container
+					[ngTemplateOutlet]="startTemplate()!"
+					[ngTemplateOutletContext]="slotContext"
+				/>
+			</div>
+		}
+
 		<!-- Navigation items in vertical accordion mode -->
 		<div class="hub-nav-mobile-panel__body">
 			<hub-nav-item-list
 				[items]="items()"
 				[depth]="0"
 				[forceAccordionMode]="true"
+				[itemTemplate]="itemTemplate()"
 				(itemClick)="onItemClick($event)"
 				(dropdownToggle)="onDropdownToggle($event)"
 			/>
 		</div>
+
+		<!-- End slot (footer) — anchored to the bottom, mirrors the desktop nav -->
+		@if (endTemplate()) {
+			<div class="hub-nav-slot hub-nav-slot--end hub-nav-mobile-panel__end">
+				<ng-container
+					[ngTemplateOutlet]="endTemplate()!"
+					[ngTemplateOutletContext]="slotContext"
+				/>
+			</div>
+		}
 	</div>
 }

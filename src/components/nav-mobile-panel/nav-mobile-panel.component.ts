@@ -1,4 +1,5 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output, TemplateRef } from '@angular/core';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavCollapseMode, HubNavOffcanvasPosition } from '../../models/nav-config.model';
 import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.component';
@@ -13,7 +14,7 @@ import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.componen
 @Component({
 	selector: 'hub-nav-mobile-panel',
 	standalone: true,
-	imports: [HubNavItemListComponent],
+	imports: [NgTemplateOutlet, HubNavItemListComponent],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: {
 		class: 'hub-nav-mobile-panel',
@@ -41,6 +42,34 @@ export class HubNavMobilePanelComponent {
 
 	/** Offcanvas slide-in direction. */
 	readonly offcanvasPosition = input<HubNavOffcanvasPosition>('start');
+
+	/**
+	 * Optional custom template for rendering item content, forwarded from the
+	 * host `HubNavComponent` so the mobile panel renders items identically to
+	 * the desktop nav (icons, badges, custom markup via `hubNavItemTemplate`).
+	 */
+	readonly itemTemplate = input<TemplateRef<unknown> | null>(null);
+
+	/**
+	 * Optional start-slot template (`hubNavStart`), forwarded from the host so
+	 * the drawer shows the same brand/header block as the desktop nav.
+	 */
+	readonly startTemplate = input<TemplateRef<unknown> | null>(null);
+
+	/**
+	 * Optional end-slot template (`hubNavEnd`), forwarded from the host so the
+	 * drawer shows the same footer block as the desktop nav.
+	 */
+	readonly endTemplate = input<TemplateRef<unknown> | null>(null);
+
+	/**
+	 * Slot context for the start/end templates rendered inside the drawer. The
+	 * drawer is always the collapsed presentation, but `inDrawer` lets consumers
+	 * tell the offcanvas drawer apart from the slim collapsed top bar (which also
+	 * receives `collapsed: true`) — e.g. to show a full header/footer in the
+	 * drawer while the top bar keeps just a brand + toggler.
+	 */
+	readonly slotContext = { collapsed: true, inDrawer: true } as const;
 
 	/** Emitted when the close button or backdrop is clicked. */
 	readonly closePanel = output<void>();

@@ -64,7 +64,8 @@ let hubNavOverlayOwnerCounter = 0;
 		'[class.hub-nav--fixed]': 'resolvedConfig().position === "fixed"',
 		'[class.hub-nav--sidebar-left]': 'resolvedConfig().sidebarSide === "left"',
 		'[class.hub-nav--sidebar-right]': 'resolvedConfig().sidebarSide === "right"',
-		'[attr.data-variant]': 'variant() ?? null',
+		'[class.hub-nav--has-panels]': 'hasPanels()',
+		'[attr.data-variant]': 'color() ?? null',
 		'[style.--hub-nav-accent]': 'groupAccent()',
 		'[style.width]': 'resolvedOrientation() === "vertical" ? "100%" : null',
 		'[style.align-self]': 'resolvedOrientation() === "vertical" ? "stretch" : null',
@@ -103,24 +104,26 @@ export class HubNavComponent implements OnInit, OnDestroy {
 	readonly autoOpenFromRoute = input<boolean>(false);
 
 	/**
-	 * Accent applied to the hover/active affordances of the nav items. Accepts
+	 * Semantic accent applied to the hover/active affordances of the nav items.
+	 * Named `color` for consistency with the rest of the hub-ui family
+	 * (`<hub-button>`, `<hub-badge>`, `<hub-metrics>`, `<hub-milestone>`). Accepts
 	 * ANY colour: a semantic/built-in name (`primary` / `success` / `danger` /
 	 * `warning` / `info`), a custom registered accent name, a CSS named colour,
 	 * or a literal `#hex` / `rgb()` / `oklch()` / `var()`. Bareword names resolve
-	 * to the design-system `--hub-sys-color-<variant>` token (falling back to the
+	 * to the design-system `--hub-sys-color-<name>` token (falling back to the
 	 * word itself as a raw colour); literals are passed through unchanged.
 	 * Defaults to `primary` when omitted.
 	 */
-	readonly variant = input<'primary' | 'success' | 'danger' | 'warning' | 'info' | (string & {}) | undefined>(undefined);
+	readonly color = input<'primary' | 'success' | 'danger' | 'warning' | 'info' | (string & {}) | undefined>(undefined);
 
 	/**
 	 * Inline accent fed to the nav styles. A bareword (semantic name / registered
-	 * accent / CSS named colour) resolves to `var(--hub-sys-color-<variant>, <variant>)`
+	 * accent / CSS named colour) resolves to `var(--hub-sys-color-<name>, <name>)`
 	 * — the ds token with the word itself as a raw fallback — while a literal
 	 * `#hex` / `rgb()` / `oklch()` / `var()` is passed through untouched. Returns
-	 * `null` when no variant is set, keeping the `primary` default.
+	 * `null` when no colour is set, keeping the `primary` default.
 	 */
-	readonly groupAccent = computed(() => resolveHubAccent(this.variant()));
+	readonly groupAccent = computed(() => resolveHubAccent(this.color()));
 
 	/** Start slot template projected via `hubNavStart` directive. */
 	private readonly startDirective = contentChild(HubNavStartDirective);

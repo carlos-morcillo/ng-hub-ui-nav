@@ -52,6 +52,10 @@
 	--hub-nav-border-color: var(--hub-sys-border-color-default, #dee2e6);
 	--hub-nav-border-width: 1px;
 	--hub-nav-border-style: solid;
+	// Container radius + elevation. Default to a square, flat bar; set these to
+	// turn the whole nav into a floating card (e.g. a sidebar rail).
+	--hub-nav-border-radius: 0;
+	--hub-nav-box-shadow: none;
 
 	// ── Brand ──
 	--hub-nav-brand-font-size: var(--hub-ref-font-size-lg, 1.25rem);
