@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.7.1] - 2026-07-26
+
+### Fixed
+
+- Declared the real `ng-hub-ui-utils` peer range: `>=22.7.0`. The library imports `resolveHubAccent` (utils 22.7.0), `HubOverflowTooltipDirective` and the overlay engine; the previous `>=1.0.0` floor resolved to a utils major that lacks those symbols, producing installs that compile but fail at runtime.
+
 ## [22.7.0] - 2026-07-08
 
 ### Added
