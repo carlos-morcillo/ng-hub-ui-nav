@@ -126,6 +126,19 @@ describe('HubNavComponent', () => {
 			fixture.detectChanges();
 			expect(component.ariaLabel()).toBe('Main Navigation');
 		});
+
+		it('announces horizontal orientation on the root menubar by default', () => {
+			fixture.detectChanges();
+			const menubar: HTMLElement | null = fixture.nativeElement.querySelector('[role="menubar"]');
+			expect(menubar?.getAttribute('aria-orientation')).toBe('horizontal');
+		});
+
+		it('announces vertical orientation on the root menubar when the nav is vertical', () => {
+			componentRef.setInput('config', { orientation: 'vertical' });
+			fixture.detectChanges();
+			const menubar: HTMLElement | null = fixture.nativeElement.querySelector('[role="menubar"]');
+			expect(menubar?.getAttribute('aria-orientation')).toBe('vertical');
+		});
 	});
 
 	describe('outputs', () => {

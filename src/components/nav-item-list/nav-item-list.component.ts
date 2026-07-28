@@ -43,6 +43,10 @@ type HubNavOverlayPlacement = 'root-dropdown' | 'flyout';
 		class: 'hub-nav-item-list',
 		'[class.hub-nav-item-list--force-accordion]': 'forceAccordionMode()',
 		'[attr.role]': 'depth() === 0 ? "menubar" : "menu"',
+		// menubar defaults to horizontal per WAI-ARIA; a vertical sidebar must say so.
+		// Submenus (depth > 0) always stack vertically.
+		'[attr.aria-orientation]':
+			'depth() === 0 ? (state.orientation() === "vertical" ? "vertical" : "horizontal") : "vertical"',
 		'(keydown)': 'onKeyDown($event)'
 	},
 	templateUrl: './nav-item-list.component.html',

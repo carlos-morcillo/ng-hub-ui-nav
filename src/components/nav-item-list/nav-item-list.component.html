@@ -21,7 +21,7 @@
 			/>
 
 			<ng-template #overlayDropdownTemplate>
-				<div class="hub-nav-dropdown" role="menu">
+				<div class="hub-nav-dropdown" role="menu" aria-orientation="vertical">
 					<hub-nav-item-list
 						[items]="item.children ?? []"
 						[depth]="depth() + 1"
@@ -61,7 +61,7 @@
 					</div>
 				} @else {
 					<!-- Flyout / Dropdown: positioned panel -->
-					<div class="hub-nav-dropdown" role="menu">
+					<div class="hub-nav-dropdown" role="menu" aria-orientation="vertical">
 						<hub-nav-item-list
 							[items]="item.children!"
 							[depth]="depth() + 1"
