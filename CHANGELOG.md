@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.7.2] - 2026-07-27
+
+### Fixed
+
+- **`aria-orientation` on the menu tree.** The root `menubar` now announces `vertical` when the nav renders as a sidebar (WAI-ARIA defaults `menubar` to horizontal, so vertical navs announced the wrong orientation to assistive tech); submenu `menu` surfaces and the overlay dropdowns declare `vertical` explicitly. Keyboard behavior was already orientation-aware — only the attribute was missing.
+
 ## [22.7.1] - 2026-07-26
 
 ### Fixed
