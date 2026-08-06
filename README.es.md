@@ -222,6 +222,23 @@ interface HubNavItem {
 }
 ```
 
+#### Coincidencia de ruta activa
+
+Un item se marca activo en su propia ruta **y en cualquiera por debajo de ella**,
+de modo que abrir un registro mantiene marcada su sección: `/customers` sigue
+activo en `/customers/42/edit`. La comparación es por segmentos completos —
+`/products` no se marca con `/products-archive` — y la query string se ignora. Un
+item raíz (`/`) solo coincide consigo mismo en lugar de reclamar todas las
+páginas, y un desplegable sigue a sus hijos, así que la sección permanece legible
+aunque sus entradas estén plegadas.
+
+Usa `routerLinkActiveOptions: { exact: true }` en el item que solo deba marcarse
+en su ruta exacta:
+
+```typescript
+{ id: 'home', label: 'Home', type: 'link', route: '/', routerLinkActiveOptions: { exact: true } }
+```
+
 ### Directivas
 
 - `hubNavStart`: proyecta contenido al inicio.

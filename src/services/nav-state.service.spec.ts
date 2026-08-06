@@ -367,5 +367,42 @@ describe('HubNavStateService', () => {
 			const item: HubNavItem = { id: 'arr', label: 'Arr', type: 'link', route: ['/services', 'web'] };
 			expect(service.isItemOrDescendantActive(item, '/services/web')).toBe(true);
 		});
+
+		it('should stay active on a route below its own', () => {
+			expect(service.isItemOrDescendantActive(testItems[0], '/home/42/edit')).toBe(true);
+		});
+
+		it('should keep a dropdown marked while one of its children holds the page', () => {
+			expect(service.isItemOrDescendantActive(testItems[1], '/services/web/7')).toBe(true);
+		});
+
+		it('should not be fooled by a route that merely starts with the same text', () => {
+			expect(service.isItemOrDescendantActive(testItems[0], '/homepage')).toBe(false);
+		});
+
+		it('should match only its own route when the item asks for an exact match', () => {
+			const item: HubNavItem = {
+				id: 'exact',
+				label: 'Exact',
+				type: 'link',
+				route: '/home',
+				routerLinkActiveOptions: { exact: true }
+			};
+
+			expect(service.isItemOrDescendantActive(item, '/home')).toBe(true);
+			expect(service.isItemOrDescendantActive(item, '/home/42')).toBe(false);
+		});
+
+		it('should not let a root item claim every route', () => {
+			const item: HubNavItem = { id: 'root', label: 'Root', type: 'link', route: '/' };
+
+			expect(service.isItemOrDescendantActive(item, '/')).toBe(true);
+			expect(service.isItemOrDescendantActive(item, '/customers')).toBe(false);
+		});
+
+		it('should ignore the query string when matching', () => {
+			expect(service.isItemOrDescendantActive(testItems[0], '/home?page=2')).toBe(true);
+			expect(service.isItemOrDescendantActive(testItems[0], '/home/42?tab=notes')).toBe(true);
+		});
 	});
 });

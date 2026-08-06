@@ -223,6 +223,22 @@ interface HubNavItem {
 }
 ```
 
+#### Active-route matching
+
+An item is active on its own route **and on anything below it**, so opening a
+record keeps its section marked: `/customers` stays active at
+`/customers/42/edit`. Matching is by whole segments — `/products` is not marked
+by `/products-archive` — and the query string is ignored. A root item (`/`)
+matches only itself instead of claiming every page, and a dropdown follows its
+children, so a section stays legible while its entries are collapsed.
+
+Set `routerLinkActiveOptions: { exact: true }` on an item that should only be
+marked on its exact route:
+
+```typescript
+{ id: 'home', label: 'Home', type: 'link', route: '/', routerLinkActiveOptions: { exact: true } }
+```
+
 ### Directives
 
 - `hubNavStart`: projects content into the start slot.

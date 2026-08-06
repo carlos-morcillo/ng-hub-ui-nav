@@ -2,6 +2,18 @@
 
 This document tracks breaking changes in the `ng-hub-ui-nav` library.
 
+## Version 22.8.0
+
+### Items stay active on descendant routes (behavioural change)
+
+- **Change**: an item used to be active only on its exact route. It is now active on its own route **and on anything below it**, matched by whole segments and ignoring the query string — `/customers` stays marked at `/customers/42/edit`. A root item (`/`) still matches only itself, and `routerLinkActiveOptions: { exact: true }` — declared in `HubNavItem` but never read until now — opts an item back into strict matching.
+- **Impact**: no API changed and existing code keeps compiling, but more items can read as active than before. A nav that leaned on the old strictness — typically a flat list of sibling sections where one route prefixes another as a real segment — now marks the parent on detail pages. Consumers who already declared `routerLinkActiveOptions: { exact: true }` see that option honoured for the first time, which is a change in itself.
+- **Restore the previous behaviour**: set the option explicitly on the items that must not follow their children.
+
+    ```ts
+    { id: 'customers', label: 'Customers', type: 'link', route: '/customers', routerLinkActiveOptions: { exact: true } }
+    ```
+
 ## Version 22.1.0
 
 ### New default active/hover/surface appearance (visual breaking)

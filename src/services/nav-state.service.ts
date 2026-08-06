@@ -486,14 +486,23 @@ export class HubNavStateService {
 	 * Recursively checks whether the given item or any of its descendants
 	 * match the provided active route.
 	 *
+	 * An item matches its own route and, unless it opts out with
+	 * `routerLinkActiveOptions.exact`, anything below it: a rail that loses its
+	 * mark the moment somebody opens a record leaves them with no idea where
+	 * they are, which is the one question navigation exists to answer. The match
+	 * is by whole segments, so `/products` is not marked by `/products-archive`.
+	 *
 	 * @param item - Item to check.
-	 * @param activeRoute - Currently active route path.
+	 * @param activeRoute - Currently active route, optionally carrying a query
+	 *   string and a fragment.
 	 * @returns `true` if the item or a descendant is active.
 	 */
 	isItemOrDescendantActive(item: HubNavItem, activeRoute: string): boolean {
 		if (item.route) {
 			const route = Array.isArray(item.route) ? item.route.join('/') : item.route;
-			const [activePath, activeFragment] = activeRoute.split('#');
+			const [pathAndQuery, activeFragment] = activeRoute.split('#');
+			const activePath = pathAndQuery.split('?')[0];
+
 			if (route === activePath) {
 				// When an item defines a fragment, require exact fragment match.
 				if (item.fragment) {
@@ -507,6 +516,18 @@ export class HubNavStateService {
 
 			// Also handle activeRoute values without fragment split side effects.
 			if (!item.fragment && route === activeRoute) {
+				return true;
+			}
+
+			// A descendant route keeps the section marked. The trailing slash is
+			// what makes this a segment test rather than a text one, and the root
+			// is excluded because it prefixes every route there is.
+			if (
+				!item.fragment &&
+				item.routerLinkActiveOptions?.exact !== true &&
+				route !== '/' &&
+				activePath.startsWith(`${route}/`)
+			) {
 				return true;
 			}
 		}

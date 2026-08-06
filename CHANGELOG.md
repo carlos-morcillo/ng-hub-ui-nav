@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.8.0] - 2026-08-06
+
+### Fixed
+
+- **The rail keeps its mark on a detail page.** An item was active only on its exact route, so opening a record — `/customers/42/edit` from `/customers` — cleared the mark and left no answer to "where am I". An item is now active on its own route **and on anything below it**, matched by whole segments (`/products` is not marked by `/products-archive`), with the query string ignored. A root item (`/`) still matches only itself rather than claiming every page, and `routerLinkActiveOptions: { exact: true }` — declared in `HubNavItem` but until now never read — opts an item back into strict matching. Dropdowns follow their children, so a section stays legible while its entries are collapsed.
+
 ## [22.7.2] - 2026-07-27
 
 ### Fixed

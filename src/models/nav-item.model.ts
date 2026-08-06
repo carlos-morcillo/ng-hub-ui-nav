@@ -33,7 +33,14 @@ export interface HubNavItem {
 	/** URL fragment for `routerLink`. */
 	fragment?: string;
 
-	/** Options for `routerLinkActive` matching. */
+	/**
+	 * How the active route is matched for this item.
+	 *
+	 * By default an item is active on its own route **and on anything below it**,
+	 * so a detail page keeps its section marked in the rail — `/customers` stays
+	 * active at `/customers/42/edit`. Set `exact: true` when only the route
+	 * itself should count, which is what a root item (`/`) almost always wants.
+	 */
 	routerLinkActiveOptions?: { exact: boolean };
 
 	/** Child items for dropdown/nested menus. Supports unlimited depth. */
