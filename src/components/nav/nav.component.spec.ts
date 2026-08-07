@@ -240,4 +240,51 @@ describe('HubNavComponent', () => {
 		});
 	});
 
+
+	/**
+	 * Clicking an entry used to close every dropdown, which is right for a flyout —
+	 * a transient menu that a click dismisses — and wrong for an accordion the
+	 * route drives: the section being navigated into is the one about to reopen,
+	 * so it blinked shut and open again on every click.
+	 */
+	describe('clicking an entry inside a route-driven accordion', () => {
+		beforeEach(() => {
+			TestBed.inject(Router).resetConfig([{ path: '**', children: [] }]);
+			componentRef.setInput('items', testItems);
+			componentRef.setInput('autoOpenFromRoute', true);
+			componentRef.setInput('config', {
+				orientation: 'vertical',
+				verticalExpandMode: 'accordion'
+			});
+			fixture.detectChanges();
+		});
+
+		it('leaves its section open', () => {
+			component.state.openDropdown('services');
+
+			component.onItemClick({
+				item: { id: 'web', label: 'Web', type: 'link', route: '/services/web' },
+				event: new MouseEvent('click')
+			});
+
+			expect(component.state.isDropdownOpen('services')).toBe(true);
+		});
+
+		it('still dismisses a flyout, which is transient by design', () => {
+			componentRef.setInput('config', {
+				orientation: 'vertical',
+				verticalExpandMode: 'flyout'
+			});
+			fixture.detectChanges();
+			component.state.openDropdown('services');
+
+			component.onItemClick({
+				item: { id: 'web', label: 'Web', type: 'link', route: '/services/web' },
+				event: new MouseEvent('click')
+			});
+
+			expect(component.state.isDropdownOpen('services')).toBe(false);
+		});
+	});
+
 });

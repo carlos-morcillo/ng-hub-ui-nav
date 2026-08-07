@@ -370,10 +370,29 @@ export class HubNavComponent implements OnInit, OnDestroy {
 			// Keep parent sections open when the clicked item also owns children.
 			// This is required for responsive/mobile accordion behavior and for
 			// route-aware items that intentionally perform both actions.
-			if (!payload.item.children?.length) {
+			if (!payload.item.children?.length && !this.routeDrivesAnAccordion(payload.item)) {
 				this.state.closeAllDropdowns();
 			}
 		}
+	}
+
+	/**
+	 * Whether the route — and not this click — owns the open state around an item.
+	 *
+	 * A flyout is transient: clicking an entry is what dismisses it, so closing
+	 * every dropdown is right. An accordion opened from the route is the opposite;
+	 * its open section is a statement about where you are. Closing it on click and
+	 * letting the route reopen it a tick later is a section that blinks shut and
+	 * open again on every navigation, so the route is left to settle it alone.
+	 *
+	 * @param item - The item that was clicked.
+	 * @returns `true` when the click must not touch the dropdown state.
+	 */
+	private routeDrivesAnAccordion(item: HubNavItem): boolean {
+		return (
+			this.autoOpenFromRoute() &&
+			this.state.getEffectiveExpandMode(item) === 'accordion'
+		);
 	}
 
 	/**

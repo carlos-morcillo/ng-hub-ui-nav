@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.8.2] - 2026-08-07
+
+### Fixed
+
+- **A section no longer blinks when you click inside it.** Clicking an entry closed every dropdown, which is what a flyout wants — it is a transient menu and the click is what dismisses it — but an accordion opened from the route is the opposite: its open section states where you are. Closing it and letting the route reopen it a tick later made the section shut and open again on every navigation, which arrived as a flicker the moment 22.8.1 taught the route to open accordions at all. The click now leaves the dropdown state alone when the route owns it (`autoOpenFromRoute` on an accordion) and still dismisses a flyout, as before.
+
 ## [22.8.1] - 2026-08-07
 
 ### Fixed
