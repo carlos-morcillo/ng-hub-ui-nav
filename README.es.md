@@ -232,6 +232,11 @@ item raíz (`/`) solo coincide consigo mismo en lugar de reclamar todas las
 páginas, y un desplegable sigue a sus hijos, así que la sección permanece legible
 aunque sus entradas estén plegadas.
 
+Cuando la ruta de un item queda por debajo de la de otro, solo se marca el más
+específico: en `/products/categories` se marca la entrada del catálogo y no
+`/products`, mientras que en `/products/42/edit` la lista conserva su marca
+porque no hay nada más específico que coincida.
+
 Usa `routerLinkActiveOptions: { exact: true }` en el item que solo deba marcarse
 en su ruta exacta:
 

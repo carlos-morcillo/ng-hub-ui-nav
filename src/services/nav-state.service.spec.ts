@@ -405,4 +405,53 @@ describe('HubNavStateService', () => {
 			expect(service.isItemOrDescendantActive(testItems[0], '/home/42?tab=notes')).toBe(true);
 		});
 	});
+
+	/**
+	 * A section stays marked on the routes below it — that is what keeps a detail
+	 * page from clearing the rail. The cost is that a sibling sitting *under*
+	 * another's path (`/products` and `/products/categories`) matches it too, and
+	 * both light up. The longest matching route has to win.
+	 */
+	describe('marking among siblings', () => {
+		const siblings: HubNavItem[] = [
+			{ id: 'list', label: 'Products', type: 'link', route: '/products' },
+			{ id: 'categories', label: 'Categories', type: 'link', route: '/products/categories' },
+			{ id: 'warehouses', label: 'Warehouses', type: 'link', route: '/products/warehouses' }
+		];
+
+		it('marks only the most specific sibling when several match', () => {
+			const active = '/products/categories';
+
+			expect(service.isItemActiveAmongSiblings(siblings[1], siblings, active)).toBe(true);
+			expect(service.isItemActiveAmongSiblings(siblings[0], siblings, active)).toBe(false);
+			expect(service.isItemActiveAmongSiblings(siblings[2], siblings, active)).toBe(false);
+		});
+
+		it('keeps the list marked on a record below it, where nothing else matches', () => {
+			const active = '/products/42/edit';
+
+			expect(service.isItemActiveAmongSiblings(siblings[0], siblings, active)).toBe(true);
+			expect(service.isItemActiveAmongSiblings(siblings[1], siblings, active)).toBe(false);
+		});
+
+		it('never lets a prefix match override an exact one', () => {
+			const active = '/products';
+
+			expect(service.isItemActiveAmongSiblings(siblings[0], siblings, active)).toBe(true);
+		});
+
+		it('keeps a parent marked when it matched through a descendant', () => {
+			const group: HubNavItem = {
+				id: 'group',
+				label: 'Products',
+				type: 'dropdown',
+				children: siblings
+			};
+
+			expect(
+				service.isItemActiveAmongSiblings(group, [group], '/products/categories')
+			).toBe(true);
+		});
+	});
+
 });

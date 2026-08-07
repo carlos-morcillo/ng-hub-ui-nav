@@ -483,6 +483,71 @@ export class HubNavStateService {
 	// ──────────────────────────────────────────────
 
 	/**
+	 * Whether this is the item to mark among the ones it sits with.
+	 *
+	 * `isItemOrDescendantActive` keeps a section marked on everything below it,
+	 * which is what stops a detail page from clearing the rail. The cost shows up
+	 * between siblings: when one sits under another's path — `/products` and
+	 * `/products/categories` — the shorter one matches the longer one's route too
+	 * and both light up, so the rail claims you are in two places at once.
+	 *
+	 * The longest matching route wins. On `/products/categories` only the
+	 * catalogue is marked; on `/products/42/edit` the list still is, because
+	 * nothing more specific matches. An exact match is never overridden, and an
+	 * item that matched through a descendant — a dropdown with no route of its
+	 * own — keeps its mark: it is the section, not a competitor.
+	 *
+	 * @param item - Item being considered.
+	 * @param siblings - The items rendered alongside it, itself included.
+	 * @param activeRoute - Currently active route.
+	 * @returns `true` when this item is the one to mark.
+	 */
+	isItemActiveAmongSiblings(
+		item: HubNavItem,
+		siblings: HubNavItem[],
+		activeRoute: string
+	): boolean {
+		if (!this.isItemOrDescendantActive(item, activeRoute)) {
+			return false;
+		}
+
+		const route = this.routeOf(item);
+
+		if (!route) {
+			return true;
+		}
+
+		const activePath = activeRoute.split('#')[0].split('?')[0];
+
+		if (route === activePath) {
+			return true;
+		}
+
+		return !siblings.some((sibling) => {
+			if (sibling === item) {
+				return false;
+			}
+
+			const siblingRoute = this.routeOf(sibling);
+
+			return (
+				!!siblingRoute &&
+				siblingRoute.length > route.length &&
+				this.isItemOrDescendantActive(sibling, activeRoute)
+			);
+		});
+	}
+
+	/** An item's route as a single path, whichever shape it was declared in. */
+	private routeOf(item: HubNavItem): string | null {
+		if (!item.route) {
+			return null;
+		}
+
+		return Array.isArray(item.route) ? item.route.join('/') : item.route;
+	}
+
+	/**
 	 * Recursively checks whether the given item or any of its descendants
 	 * match the provided active route.
 	 *
@@ -491,6 +556,9 @@ export class HubNavStateService {
 	 * mark the moment somebody opens a record leaves them with no idea where
 	 * they are, which is the one question navigation exists to answer. The match
 	 * is by whole segments, so `/products` is not marked by `/products-archive`.
+	 *
+	 * Marks every ancestor of the active route. To mark only the most specific
+	 * of a set of siblings, use {@link isItemActiveAmongSiblings}.
 	 *
 	 * @param item - Item to check.
 	 * @param activeRoute - Currently active route, optionally carrying a query

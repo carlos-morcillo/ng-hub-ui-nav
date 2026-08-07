@@ -280,6 +280,25 @@ export class HubNavComponent implements OnInit, OnDestroy {
 			return;
 		}
 
+		// An accordion opens in place, so what the route has to open is its
+		// dropdown state — not the panel stack, which is the drill-down mechanism
+		// and is not rendered in this mode. Deciding by collapsed-or-not alone
+		// left an expanded accordion with nothing opened from the route: the
+		// section somebody had just navigated into stayed shut, while a panel
+		// nobody could see was opened behind the page.
+		const activeRootItem = items.find((item) =>
+			this.state.isItemOrDescendantActive(item, currentUrl)
+		);
+
+		if (
+			activeRootItem &&
+			this.state.getEffectiveExpandMode(activeRootItem) === 'accordion'
+		) {
+			this.state.syncDropdownsWithRoute(items, currentUrl);
+			this._lastSyncedPath = currentPath;
+			return;
+		}
+
 		if (currentPath === this._lastSyncedPath && this.state.panelCount() > 0) {
 			return;
 		}

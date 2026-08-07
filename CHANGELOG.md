@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.8.1] - 2026-08-07
+
+### Fixed
+
+- **An accordion opens the section you navigated into.** Opening from the route was decided by whether the rail was collapsed, and nothing else: collapsed synced the dropdowns — which is what an accordion opens — while expanded opened a panel from the drill-down stack, a mechanism an accordion never renders. So a vertical accordion arrived at `/products` with its section shut, and the panel it had opened instead sat behind the page, present in the DOM and invisible to the eye and the pointer. The expanded rail now consults `getEffectiveExpandMode` for the section holding the active route, so an accordion syncs its dropdowns and only a flyout or panel rail opens panels.
+- **Two entries no longer claim to be where you are.** Marking a section on everything below it — what keeps a detail page from clearing the rail — also marked an entry whose route prefixes a sibling's: at `/products/categories`, both "Products" (`/products`) and "Categories" lit up. The longest matching route among siblings wins now, so the catalogue is marked there and the list is still marked at `/products/42/edit`, where nothing more specific matches. An exact match is never overridden, and a dropdown that matched through a child keeps its mark — it is the section, not a competitor.
+
 ## [22.8.0] - 2026-08-06
 
 ### Fixed

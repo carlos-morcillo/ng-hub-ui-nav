@@ -232,6 +232,11 @@ by `/products-archive` — and the query string is ignored. A root item (`/`)
 matches only itself instead of claiming every page, and a dropdown follows its
 children, so a section stays legible while its entries are collapsed.
 
+When one item's route sits under another's, only the most specific one is
+marked: at `/products/categories` the catalogue entry is marked and
+`/products` is not, while at `/products/42/edit` the list keeps its mark
+because nothing more specific matches.
+
 Set `routerLinkActiveOptions: { exact: true }` on an item that should only be
 marked on its exact route:
 

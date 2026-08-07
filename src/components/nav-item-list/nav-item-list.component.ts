@@ -189,7 +189,7 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 	 * @returns `true` if the item or a descendant matches the current route.
 	 */
 	isItemActive(item: HubNavItem): boolean {
-		return this.state.isItemOrDescendantActive(item, this.currentUrl());
+		return this.state.isItemActiveAmongSiblings(item, this.items(), this.currentUrl());
 	}
 
 	/** @inheritDoc */

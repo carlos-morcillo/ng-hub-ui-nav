@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { HubNavComponent } from './nav.component';
 import { HubNavItem } from '../../models/nav-item.model';
 
@@ -194,4 +194,50 @@ describe('HubNavComponent', () => {
 			expect(component.isMobileOpen()).toBe(false);
 		});
 	});
+
+	/**
+	 * An accordion opens in place, so what the route has to open is its dropdown
+	 * state — not the panel stack, which is the drill-down mechanism and is not
+	 * even rendered in this mode. Deciding by collapsed-or-not alone left an
+	 * expanded accordion with nothing opened from the route: the section a person
+	 * had just navigated into stayed shut.
+	 */
+	describe('opening from the route in accordion mode', () => {
+		beforeEach(() => {
+			// The rail only reads the URL; the routes exist so the router can
+			// resolve one at all.
+			TestBed.inject(Router).resetConfig([{ path: '**', children: [] }]);
+		});
+
+		it('opens the section holding the active route', async () => {
+			componentRef.setInput('items', testItems);
+			componentRef.setInput('autoOpenFromRoute', true);
+			componentRef.setInput('config', {
+				orientation: 'vertical',
+				verticalExpandMode: 'accordion'
+			});
+
+			await TestBed.inject(Router).navigateByUrl('/services/web');
+			fixture.detectChanges();
+			await fixture.whenStable();
+
+			expect(component.state.isDropdownOpen('services')).toBe(true);
+		});
+
+		it('leaves the other sections shut', async () => {
+			componentRef.setInput('items', testItems);
+			componentRef.setInput('autoOpenFromRoute', true);
+			componentRef.setInput('config', {
+				orientation: 'vertical',
+				verticalExpandMode: 'accordion'
+			});
+
+			await TestBed.inject(Router).navigateByUrl('/home');
+			fixture.detectChanges();
+			await fixture.whenStable();
+
+			expect(component.state.isDropdownOpen('services')).toBe(false);
+		});
+	});
+
 });
