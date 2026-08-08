@@ -12,11 +12,11 @@ A flexible, accessible, and highly customizable navigation component for Angular
 
 ## Documentation and Live Examples
 
-This package is part of [Hub UI](https://hubui.dev/), a collection of Angular component libraries for standalone apps.
+This package is part of [Hub UI](https://hubui.dev/en/), a collection of Angular component libraries for standalone apps.
 
-- Docs: https://hubui.dev/nav/overview/
-- Live examples: https://hubui.dev/nav/examples/
-- Hub UI: https://hubui.dev/
+- Docs: https://hubui.dev/en/nav/overview/
+- Live examples: https://hubui.dev/en/nav/examples/
+- Hub UI: https://hubui.dev/en/
 
 ## 🧩 Library Family `ng-hub-ui`
 
