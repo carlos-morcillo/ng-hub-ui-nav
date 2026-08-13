@@ -13,6 +13,7 @@ import {
 	ElementRef,
 	NgZone,
 	TemplateRef,
+	untracked
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
@@ -257,7 +258,19 @@ export class HubNavComponent implements OnInit, OnDestroy {
 		}
 	});
 
-	/** Keeps dropdowns and drill-down panels synchronized with the current URL and item tree. */
+	/**
+	 * Keeps dropdowns and drill-down panels synchronized with the current URL and item tree.
+	 *
+	 * Everything after the dependency reads runs `untracked`, because the body both reads panel
+	 * state and writes it. What this effect should react to is the route and the menu, and
+	 * those are the two signals read above the fence; taking a dependency on the state it is
+	 * about to rewrite is how an effect becomes its own trigger.
+	 *
+	 * Defensive rather than a proven fix: a render of this component was observed making ~1.8M
+	 * `closeAllPanels` calls in a single SSR pass, but the fence alone does not reproduce or
+	 * resolve that in a test — the churn source was not pinned down. Kept because an effect
+	 * that reads and writes the same state is a latent loop regardless.
+	 */
 	private routeSyncEffect = effect(() => {
 		if (!this.routeSyncReady() || !this.autoOpenFromRoute()) {
 			return;
@@ -265,6 +278,19 @@ export class HubNavComponent implements OnInit, OnDestroy {
 
 		const items = this.items();
 		const currentUrl = this.currentUrl();
+
+		untracked(() => this.syncFromRoute(items, currentUrl));
+	});
+
+	/**
+	 * Applies the route to the dropdown and panel state. Split out of {@link routeSyncEffect} so
+	 * the reactive dependencies stay visible at the call site and the body can read and write
+	 * state freely.
+	 *
+	 * @param items - Current menu tree.
+	 * @param currentUrl - Router URL, fragment included.
+	 */
+	private syncFromRoute(items: HubNavItem[], currentUrl: string): void {
 		const currentPath = this.extractPath(currentUrl);
 
 		if (items.length === 0) {
@@ -286,14 +312,9 @@ export class HubNavComponent implements OnInit, OnDestroy {
 		// left an expanded accordion with nothing opened from the route: the
 		// section somebody had just navigated into stayed shut, while a panel
 		// nobody could see was opened behind the page.
-		const activeRootItem = items.find((item) =>
-			this.state.isItemOrDescendantActive(item, currentUrl)
-		);
+		const activeRootItem = items.find((item) => this.state.isItemOrDescendantActive(item, currentUrl));
 
-		if (
-			activeRootItem &&
-			this.state.getEffectiveExpandMode(activeRootItem) === 'accordion'
-		) {
+		if (activeRootItem && this.state.getEffectiveExpandMode(activeRootItem) === 'accordion') {
 			this.state.syncDropdownsWithRoute(items, currentUrl);
 			this._lastSyncedPath = currentPath;
 			return;
@@ -304,7 +325,7 @@ export class HubNavComponent implements OnInit, OnDestroy {
 		}
 
 		this.openPanelsFromRoute(currentUrl);
-	});
+	}
 
 	/** ARIA label for the nav element. */
 	readonly ariaLabel = computed(() => this.resolvedConfig().ariaLabel);
@@ -343,12 +364,22 @@ export class HubNavComponent implements OnInit, OnDestroy {
 
 		this.setupBreakpointListener();
 		this.setupClickOutsideListener();
+
+		this.routerSub = this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e) => {
+			this.currentUrl.set((e as NavigationEnd).urlAfterRedirects);
+		});
+
+		// Re-read the URL now that the subscription exists. The signal was seeded at
+		// construction, when the router had not resolved the first navigation yet, and the
+		// NavigationEnd that resolved it fired before the line above could hear it — so the
+		// seed stayed at whatever the router reported then, usually '/'. Nothing failed
+		// loudly: every route-driven lookup simply matched no item, and a sidebar that
+		// should have opened on the section you landed in stayed shut on every load.
+		//
+		// Set before `routeSyncReady`, so the effect's first real pass already sees the
+		// route the page was opened at instead of syncing against a stale one first.
+		this.currentUrl.set(this.router.url);
 		this.routeSyncReady.set(true);
-		this.routerSub = this.router.events
-			.pipe(filter((e) => e instanceof NavigationEnd))
-			.subscribe((e) => {
-				this.currentUrl.set((e as NavigationEnd).urlAfterRedirects);
-			});
 	}
 
 	/** @inheritDoc */
@@ -389,10 +420,7 @@ export class HubNavComponent implements OnInit, OnDestroy {
 	 * @returns `true` when the click must not touch the dropdown state.
 	 */
 	private routeDrivesAnAccordion(item: HubNavItem): boolean {
-		return (
-			this.autoOpenFromRoute() &&
-			this.state.getEffectiveExpandMode(item) === 'accordion'
-		);
+		return this.autoOpenFromRoute() && this.state.getEffectiveExpandMode(item) === 'accordion';
 	}
 
 	/**
@@ -523,7 +551,7 @@ export class HubNavComponent implements OnInit, OnDestroy {
 				if (prevPanel) {
 					const trigger = prevPanel.querySelector(
 						`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__link,` +
-						`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__dropdown-toggle`
+							`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__dropdown-toggle`
 					) as HTMLElement | null;
 					trigger?.focus();
 					return;
@@ -532,7 +560,7 @@ export class HubNavComponent implements OnInit, OnDestroy {
 			// Fallback: focus the trigger in the main nav
 			const mainTrigger = this.elementRef.nativeElement.querySelector(
 				`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__link,` +
-				`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__dropdown-toggle`
+					`hub-nav-item[data-item-id="${parentItemId}"] .hub-nav-item__dropdown-toggle`
 			) as HTMLElement | null;
 			mainTrigger?.focus();
 		});
@@ -659,7 +687,7 @@ export class HubNavComponent implements OnInit, OnDestroy {
 			return;
 		}
 
-		const rootItem = rootItems.find((item) => this.state.isItemOrDescendantActive(item, url));
+		const rootItem = rootItems.find((item) => this.state.isItemActiveAmongSiblings(item, rootItems, url));
 		if (!rootItem?.children?.length) {
 			this.state.closeAllPanels();
 			this._lastSyncedPath = path;

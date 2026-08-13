@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.8.4] - 2026-08-13
+
+### Fixed
+
+- Route-aware panel sidebars now choose the most specific active root item when opening panels. A localized Home route such as `/en/` no longer wins over `/en/forms/overview/`, so deep links keep the active library's secondary panel open instead of leaving only its root entry highlighted.
+
 ## [22.8.3] - 2026-08-08
 
 ### Fixed
