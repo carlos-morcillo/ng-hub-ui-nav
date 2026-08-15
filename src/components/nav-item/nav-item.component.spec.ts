@@ -231,4 +231,45 @@ describe('HubNavItemComponent', () => {
 			expect(ctx.depth).toBe(2);
 		});
 	});
+
+	describe('rail mode', () => {
+		beforeEach(() => {
+			const state = TestBed.inject(HubNavStateService);
+			state.setConfig({ ...state.config(), orientation: 'vertical', verticalExpandMode: 'accordion' });
+			state.setRail(true);
+		});
+
+		it('should hide the caret while rail is active', () => {
+			componentRef.setInput('item', routableDropdownItem);
+			fixture.detectChanges();
+			expect(component.showCaret()).toBe(false);
+			expect(fixture.nativeElement.querySelector('.hub-nav-item__caret-button')).toBeNull();
+		});
+
+		it('should expose aria-expanded on the caret-less routable trigger', () => {
+			componentRef.setInput('item', routableDropdownItem);
+			componentRef.setInput('isExpanded', true);
+			fixture.detectChanges();
+			const link = fixture.nativeElement.querySelector('.hub-nav-item__link');
+			expect(link.getAttribute('aria-expanded')).toBe('true');
+			expect(link.getAttribute('aria-haspopup')).toBe('true');
+		});
+
+		it('should expose the rail state in the custom template context', () => {
+			componentRef.setInput('item', linkItem);
+			fixture.detectChanges();
+			expect(component.templateContext().rail).toBe(true);
+		});
+	});
+
+	describe('labels', () => {
+		it('should build the caret toggle label from the configured section label', () => {
+			const state = TestBed.inject(HubNavStateService);
+			state.setConfig({ ...state.config(), labels: { toggleSection: 'Alternar {label}' } });
+			componentRef.setInput('item', routableDropdownItem);
+			fixture.detectChanges();
+			const caret = fixture.nativeElement.querySelector('.hub-nav-item__caret-button');
+			expect(caret.getAttribute('aria-label')).toBe('Alternar Docs');
+		});
+	});
 });

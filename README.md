@@ -68,7 +68,8 @@ This library is part of the **ng-hub-ui** ecosystem:
 - Router-aware active states with fragment and query param support.
 - Scroll-spy helpers for documentation pages and one-page layouts.
 - Sticky vertical navigation support.
-- **Tooltip on truncated labels** — long item labels are clipped with an ellipsis (the standard sidebar behaviour) and reveal their full text on hover, automatically and only when truncated (via `ng-hub-ui-utils`' `[hubOverflowTooltip]`). The tooltip is **agnostic** — it defaults to the hub-ui tooltip but is swappable with `provideHubTooltip(...)`. Requires `ng-hub-ui-utils >= 22.6.0` and the tooltip styles (`@use 'ng-hub-ui-utils/styles/tooltip';`). Tip: control the sidebar width with `--hub-nav-panel-width`.
+- **Desktop icon rail** — the two-way `rail` input collapses a vertical nav to `--hub-nav-rail-width` (4rem) showing icons only: labels surface as tooltips, accordion groups open as click-triggered overlay flyouts, and the offcanvas behavior still wins below `collapseBreakpoint`. A built-in edge toggle ships by default (`config.railToggle: false` to bring your own) and is fully themeable through `--hub-nav-rail-toggle-*`, including a replaceable SVG arrow. The library persists nothing; `railChange` lets the app store the preference.
+- **Tooltip on truncated labels** — long item labels are clipped with an ellipsis (the standard sidebar behaviour) and reveal their full text on hover, automatically and only when truncated (via `ng-hub-ui-utils`' `[hubOverflowTooltip]`). The tooltip is **agnostic** — it defaults to the hub-ui tooltip but is swappable with `provideHubTooltip(...)`. Requires `ng-hub-ui-utils >= 22.8.1` (the library's peer floor) and the tooltip styles (`@use 'ng-hub-ui-utils/styles/tooltip';`). Tip: control the sidebar width with `--hub-nav-panel-width`.
 - Semantic `variant` accent system (`primary` / `success` / `danger` / `warning` / `info`, plus any custom accent) recolouring the hover/active affordances — mirrors `<hub-panels>`.
 - Full CSS variable theming via `--hub-nav-*` tokens.
 
@@ -157,6 +158,23 @@ export class ExampleComponent {
 </section>
 ```
 
+### Collapsed Icon Rail
+
+```html
+<hub-nav
+	[items]="items"
+	[(rail)]="rail"
+	[config]="{ orientation: 'vertical', verticalExpandMode: 'accordion' }"
+>
+	<!-- The slot context exposes the rail state, e.g. to swap the logo for a mark -->
+	<ng-template hubNavStart let-rail="rail">
+		<span class="brand">{{ rail ? 'A' : 'Acme ERP' }}</span>
+	</ng-template>
+</hub-nav>
+```
+
+A toggle button ships on the outer edge of the primary column: an arrow inside a container, fully driven by the `--hub-nav-rail-toggle-*` tokens (size, padding, border, radius, colors, shadow, offsets and the arrow glyph itself via the `--hub-nav-rail-toggle-icon` SVG mask). Set `config.railToggle: false` to hide it and drive `[(rail)]` from your own control. While the rail is active the nav host width is `--hub-nav-rail-width` (4rem by default), labels keep their accessible name and appear as tooltips, and groups open as overlay flyouts on click. Below `collapseBreakpoint` the flag is ignored — mobile keeps the offcanvas. `railChange` reports every flip (built-in toggle included) so the app can persist the preference.
+
 ## API Reference
 
 ### `HubNavComponent`
@@ -170,6 +188,7 @@ export class ExampleComponent {
 | `navClass` | `string` | `''` | Additional class applied to the internal `<nav>`. |
 | `itemTemplate` | `TemplateRef<unknown> \| null` | `null` | Optional custom item template. |
 | `autoOpenFromRoute` | `boolean` | `false` | Opens matching dropdowns/panels from the current route. |
+| `rail` | `boolean` (two-way `model`) | `false` | Desktop-only icon rail for vertical navs. Ignored below `collapseBreakpoint`. Bind with `[(rail)]`. |
 | `variant` | `'primary' \| 'success' \| 'danger' \| 'warning' \| 'info' \| string` | `'primary'` | Semantic accent for the hover/active affordances. Built-in values render with the design-system tints; any custom string resolves through `--hub-sys-color-<variant>`. |
 
 #### Outputs
@@ -181,6 +200,7 @@ export class ExampleComponent {
 | `dropdownClose` | `OutputEmitterRef<HubNavItem>` | Emitted when a dropdown closes. |
 | `mobileToggle` | `OutputEmitterRef<boolean>` | Emitted when the responsive mobile panel opens or closes. |
 | `panelChange` | `OutputEmitterRef<HubNavPanelEvent>` | Emitted when a panel opens, closes, drills down, or drills back. |
+| `railChange` | `OutputEmitterRef<boolean>` | Emitted when the rail model flips — persist it app-side to restore the rail on boot. |
 
 ### `HubNavConfig`
 
@@ -198,8 +218,13 @@ interface HubNavConfig {
 	panelMaxVisible: number;
 	sidebarSide: 'left' | 'right';
 	panelWidth: string;
+	dropdownRenderMode: 'inline' | 'overlay';
+	labels?: Partial<HubNavLabels>;
 }
 ```
+
+`labels` overrides the built-in accessible strings (`toggleNavigation`, `closeNavigation`, `goBack`, `closePanel`, `toggleSection` — the latter supports a `{label}` placeholder) per instance. Without an override, each label resolves from the shared `HUBUI.NAV.*` dictionary keys (`provideHubTranslationAdapter()` in `ng-hub-ui-utils`) and finally falls back to English.
+
 
 ### `HubNavItem`
 

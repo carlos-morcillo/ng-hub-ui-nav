@@ -1,4 +1,6 @@
-import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, input, output } from '@angular/core';
+import { HubNavStateService } from '../../services/nav-state.service';
+import { HUB_NAV_DEFAULT_LABELS } from '../../models/nav-labels.model';
 
 /**
  * Hamburger toggle button that shows/hides the mobile navigation panel.
@@ -19,7 +21,7 @@ import { Component, ChangeDetectionStrategy, input, output } from '@angular/core
 			class="hub-nav-toggler__button"
 			[class.hub-nav-toggler__button--open]="isOpen()"
 			[attr.aria-expanded]="isOpen()"
-			aria-label="Toggle navigation"
+			[attr.aria-label]="toggleLabel()"
 			(click)="toggle.emit()"
 		>
 			<span class="hub-nav-toggler__icon">
@@ -100,6 +102,15 @@ import { Component, ChangeDetectionStrategy, input, output } from '@angular/core
 	]
 })
 export class HubNavTogglerComponent {
+	/**
+	 * Owning nav state, absent when the toggler is instantiated standalone
+	 * (e.g. in isolated tests); labels then fall back to the English defaults.
+	 */
+	private readonly state = inject(HubNavStateService, { optional: true });
+
+	/** Accessible label resolved through the nav's localizable labels. */
+	readonly toggleLabel = computed(() => this.state?.labels().toggleNavigation ?? HUB_NAV_DEFAULT_LABELS.toggleNavigation);
+
 	/** Whether the mobile panel is currently open. */
 	readonly isOpen = input<boolean>(false);
 

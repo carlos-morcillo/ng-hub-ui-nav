@@ -242,3 +242,48 @@
 :host-context(.hub-nav-item-list--force-accordion) .hub-nav-item__link {
 	width: 100%;
 }
+
+// Stand-in glyph for icon-less rail items: hidden everywhere except inside a
+// rail list (panel bodies and overlay flyouts keep their full labels).
+.hub-nav-item__initial {
+	display: none;
+}
+
+// ── Rail (desktop icon-only sidebar) ──
+// Scoped through the root item-list class (set by hub-nav on its primary
+// column only) so drill-down panel items and overlay flyouts keep their
+// full labels.
+:host-context(.hub-nav-item-list--rail) {
+	.hub-nav-item__link {
+		justify-content: center;
+		gap: 0;
+		padding-inline: 0;
+	}
+
+	// The label collapses instead of unmounting: the accessible name of the
+	// link is preserved, and the rail tooltip carries the visible text.
+	.hub-nav-item__label {
+		flex: 0 0 auto;
+		inline-size: 0;
+		overflow: hidden;
+	}
+
+	.hub-nav-item__badge,
+	.hub-nav-item__caret,
+	.hub-nav-item__header {
+		display: none;
+	}
+
+	// Stand-in glyph for icon-less items: the label's first character inside
+	// the icon box, so every item keeps a visible, centered hit target.
+	.hub-nav-item__initial {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--hub-nav-icon-size, 1em);
+		height: var(--hub-nav-icon-size, 1em);
+		font-weight: var(--hub-nav-item-active-font-weight, 600);
+		text-transform: uppercase;
+		flex-shrink: 0;
+	}
+}

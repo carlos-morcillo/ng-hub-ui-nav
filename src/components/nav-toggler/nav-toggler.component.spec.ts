@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { HubNavTogglerComponent } from './nav-toggler.component';
+import { HubNavStateService } from '../../services/nav-state.service';
 
 describe('HubNavTogglerComponent', () => {
 	let component: HubNavTogglerComponent;
@@ -9,7 +10,8 @@ describe('HubNavTogglerComponent', () => {
 
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
-			imports: [HubNavTogglerComponent]
+			imports: [HubNavTogglerComponent],
+			providers: [HubNavStateService]
 		}).compileComponents();
 
 		fixture = TestBed.createComponent(HubNavTogglerComponent);
@@ -41,6 +43,14 @@ describe('HubNavTogglerComponent', () => {
 	it('should have aria-label for accessibility', () => {
 		const button = fixture.nativeElement.querySelector('button');
 		expect(button.getAttribute('aria-label')).toBe('Toggle navigation');
+	});
+
+	it('should use the toggle label configured on the nav', () => {
+		const state = TestBed.inject(HubNavStateService);
+		state.setConfig({ ...state.config(), labels: { toggleNavigation: 'Abrir menú' } });
+		fixture.detectChanges();
+		const button = fixture.nativeElement.querySelector('button');
+		expect(button.getAttribute('aria-label')).toBe('Abrir menú');
 	});
 
 	it('should emit toggle on button click', () => {

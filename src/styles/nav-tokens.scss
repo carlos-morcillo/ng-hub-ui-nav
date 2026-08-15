@@ -151,6 +151,35 @@
 	--hub-nav-icon-size: var(--hub-ref-icon-size, 1em);
 	--hub-nav-icon-gap: var(--hub-ref-space-2, 0.5rem);
 
+	// ── Rail (desktop icon-only sidebar) ──
+	--hub-nav-rail-width: 4rem;
+	// Complete `transition` value (property + duration + easing), matching the
+	// shape of the other `-transition` tokens in this namespace.
+	--hub-nav-rail-transition: width 0.2s ease-in-out;
+
+	// ── Rail toggle (built-in collapse/expand button) ──
+	--hub-nav-rail-toggle-size: 1.75rem;
+	--hub-nav-rail-toggle-padding: 0.25rem;
+	--hub-nav-rail-toggle-color: var(--hub-nav-item-color, #212529);
+	--hub-nav-rail-toggle-bg: var(--hub-sys-surface-elevated, #fff);
+	--hub-nav-rail-toggle-hover-color: var(--hub-nav-item-hover-color, #0d6efd);
+	--hub-nav-rail-toggle-hover-bg: var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04));
+	--hub-nav-rail-toggle-border-width: 1px;
+	--hub-nav-rail-toggle-border-color: var(--hub-nav-border-color, #dee2e6);
+	--hub-nav-rail-toggle-border-radius: var(--hub-ref-radius-pill, 50rem);
+	--hub-nav-rail-toggle-shadow: var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075));
+	// Arrow glyph: an SVG mask, replaceable with any url(...) image.
+	--hub-nav-rail-toggle-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+	--hub-nav-rail-toggle-icon-size: 0.875em;
+	// Block position of the toggle's CENTER within the column (any length or
+	// percentage; 50% = vertical middle). Inline offset from the outer edge
+	// (negative values overhang the border, the default hangs half out).
+	--hub-nav-rail-toggle-inset-block: 50%;
+	--hub-nav-rail-toggle-inset-inline: calc(var(--hub-nav-rail-toggle-size, 1.75rem) / -2);
+	// Above the drill-down panels, which sit at --hub-nav-panel-zindex.
+	--hub-nav-rail-toggle-zindex: calc(var(--hub-nav-panel-zindex, 1000) + 1);
+	--hub-nav-rail-toggle-transition: var(--hub-sys-transition-fast, all 0.15s ease-in-out);
+
 	// ── Panel mode (stacked side panels) ──
 	--hub-nav-panel-width: 16rem;
 	--hub-nav-panel-bg: var(--hub-sys-surface-elevated, #f8f9fa);

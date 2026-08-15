@@ -91,6 +91,28 @@ nav {
 	display: flex;
 	flex-direction: column;
 	min-height: 0;
+	// Anchor for the built-in rail toggle pinned to the column's outer edge.
+	position: relative;
+}
+
+// Built-in rail toggle: floats on the outer edge of the primary column,
+// half-overhanging the border by default. Every offset is token-driven:
+// `--hub-nav-rail-toggle-inset-block` places the button's CENTER (the
+// translate keeps that contract for any value), defaulting to the vertical
+// middle of the column. The z-index defaults above the drill-down panels
+// (`--hub-nav-panel-zindex`), which would otherwise paint over the overhang.
+.hub-nav__primary-column > hub-nav-rail-toggle {
+	position: absolute;
+	inset-block-start: var(--hub-nav-rail-toggle-inset-block, 50%);
+	inset-inline-end: var(--hub-nav-rail-toggle-inset-inline, calc(var(--hub-nav-rail-toggle-size, 1.75rem) / -2));
+	transform: translateY(-50%);
+	z-index: var(--hub-nav-rail-toggle-zindex, calc(var(--hub-nav-panel-zindex, 1000) + 1));
+}
+
+// A right-hand sidebar pins the toggle to its left (outer) edge instead.
+:host(.hub-nav--sidebar-right) .hub-nav__primary-column > hub-nav-rail-toggle {
+	inset-inline-end: auto;
+	inset-inline-start: var(--hub-nav-rail-toggle-inset-inline, calc(var(--hub-nav-rail-toggle-size, 1.75rem) / -2));
 }
 
 :host(.hub-nav--sidebar-left) .hub-nav__main-and-panels {
@@ -314,6 +336,39 @@ nav {
 	display: flex;
 	align-items: center;
 	padding-inline: var(--hub-nav-brand-padding-x, 0.5rem);
+}
+
+// ── Rail (desktop icon-only sidebar) ──
+// The host width is stylesheet-driven here (the inline 100% is dropped while
+// the rail is active) so `--hub-nav-rail-width` stays the single override hook.
+:host(.hub-nav--rail) {
+	width: var(--hub-nav-rail-width, 4rem);
+	transition: var(--hub-nav-rail-transition, width 0.2s ease-in-out);
+}
+
+// With drill-down panels open, the host grows to fit rail + panels while the
+// primary column stays pinned at rail width.
+:host(.hub-nav--rail.hub-nav--has-panels) {
+	width: auto;
+}
+
+:host(.hub-nav--rail.hub-nav--has-panels) .hub-nav__main-and-panels > .hub-nav__primary-column {
+	flex: 0 0 var(--hub-nav-rail-width, 4rem);
+	width: var(--hub-nav-rail-width, 4rem);
+	min-width: var(--hub-nav-rail-width, 4rem);
+}
+
+// Slots center their content in the narrow column (e.g. a logo mark).
+:host(.hub-nav--rail) .hub-nav-slot--start,
+:host(.hub-nav--rail) .hub-nav-slot--end {
+	justify-content: center;
+	padding-inline: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:host(.hub-nav--rail) {
+		transition: none;
+	}
 }
 
 // ── Positioning ──

@@ -16,6 +16,12 @@ export interface HubNavItemTemplateContext {
 
 	/** Nesting depth level (0 = root level). */
 	depth: number;
+
+	/**
+	 * Whether the desktop icon rail is active. Distinct from the mobile
+	 * `collapsed` state: the rail only exists on vertical desktop navs.
+	 */
+	rail?: boolean;
 }
 
 /**
@@ -30,6 +36,12 @@ export interface HubNavStartTemplateContext {
 	 * consumers show a full header in the drawer while keeping the top bar slim.
 	 */
 	inDrawer?: boolean;
+	/**
+	 * Whether the desktop icon rail is active. Distinct from `collapsed`
+	 * (mobile viewport): the rail is desktop-only, so both flags are never
+	 * `true` at the same time. Lets shells swap the full logo for a mark.
+	 */
+	rail?: boolean;
 }
 
 /**
@@ -44,4 +56,10 @@ export interface HubNavEndTemplateContext {
 	 * consumers show a full footer in the drawer while keeping the top bar slim.
 	 */
 	inDrawer?: boolean;
+	/**
+	 * Whether the desktop icon rail is active. Distinct from `collapsed`
+	 * (mobile viewport): the rail is desktop-only, so both flags are never
+	 * `true` at the same time. Lets shells collapse footer content.
+	 */
+	rail?: boolean;
 }

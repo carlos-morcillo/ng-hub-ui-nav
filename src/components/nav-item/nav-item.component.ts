@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, input, output, inject, computed, TemplateRef } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { HubOverflowTooltipDirective } from 'ng-hub-ui-utils';
+import { HubOverflowTooltipDirective, TooltipDirective } from 'ng-hub-ui-utils';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavStateService } from '../../services/nav-state.service';
 
@@ -14,7 +14,7 @@ import { HubNavStateService } from '../../services/nav-state.service';
 @Component({
 	selector: 'hub-nav-item',
 	standalone: true,
-	imports: [NgTemplateOutlet, RouterLink, HubOverflowTooltipDirective],
+	imports: [NgTemplateOutlet, RouterLink, HubOverflowTooltipDirective, TooltipDirective],
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	host: {
 		class: 'hub-nav-item',
@@ -60,6 +60,28 @@ export class HubNavItemComponent {
 	/** Reference to the nav state service. */
 	private readonly state = inject(HubNavStateService);
 
+	/** Whether the desktop icon rail is active on the owning nav. */
+	readonly railActive = computed(() => this.state.railActive());
+
+	/**
+	 * Tooltip text for the item while the rail hides its label. Empty outside
+	 * the rail, which keeps the underlying tooltip controller disabled.
+	 */
+	readonly railTooltip = computed(() => (this.railActive() ? this.item().label : ''));
+
+	/** Tooltip side: away from the rail, following the configured sidebar side. */
+	readonly railTooltipPlacement = computed(() => (this.state.config().sidebarSide === 'right' ? 'left' : 'right'));
+
+	/** Accessible label for the caret button, resolved through the nav labels. */
+	readonly caretAriaLabel = computed(() => this.state.toggleSectionLabel(this.item().label));
+
+	/**
+	 * First character of the label, rendered as a stand-in glyph while the
+	 * rail hides labels and the item declares no icon — an icon-less item
+	 * would otherwise collapse into an invisible hit target.
+	 */
+	readonly railInitial = computed(() => (this.railActive() && !this.item().icon ? this.item().label.charAt(0) : ''));
+
 	/** Whether this item has child items. */
 	readonly hasChildren = computed(() => {
 		const children = this.item().children;
@@ -92,7 +114,8 @@ export class HubNavItemComponent {
 		$implicit: this.item(),
 		active: this.isActive(),
 		expanded: this.isExpanded(),
-		depth: this.depth()
+		depth: this.depth(),
+		rail: this.railActive()
 	}));
 
 	/**
@@ -106,6 +129,12 @@ export class HubNavItemComponent {
 
 		if (this.forceAccordionMode()) {
 			return true;
+		}
+
+		// The rail has no room for a split caret: the whole item is the
+		// trigger, mirroring panel mode.
+		if (this.railActive()) {
+			return false;
 		}
 
 		return this.state.getEffectiveExpandMode(this.item()) !== 'panel';

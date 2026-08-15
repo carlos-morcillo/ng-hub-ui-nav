@@ -87,6 +87,9 @@
 	@if (!isCollapsed() && resolvedOrientation() === 'vertical') {
 		<div class="hub-nav__main-and-panels">
 			<div class="hub-nav__primary-column">
+				@if (showRailToggle()) {
+					<hub-nav-rail-toggle (toggle)="onRailToggle()" />
+				}
 				<!-- Start slot in vertical desktop mode: constrained to the primary column only -->
 				@if (startTemplate()) {
 					<div class="hub-nav-slot hub-nav-slot--start">
@@ -99,6 +102,7 @@
 				<hub-nav-item-list
 					[items]="items()"
 					[depth]="0"
+					[class.hub-nav-item-list--rail]="isRailActive()"
 					[itemTemplate]="resolvedItemTemplate()"
 					[dropdownRenderMode]="dropdownRenderMode()"
 					[overlayOwnerClass]="overlayOwnerClass"

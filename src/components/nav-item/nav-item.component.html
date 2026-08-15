@@ -17,10 +17,14 @@
 		[attr.tabindex]="item().disabled ? -1 : 0"
 		[attr.aria-disabled]="item().disabled || null"
 		[attr.aria-current]="isActive() ? 'page' : null"
+		[tooltip]="railTooltip()"
+		[placement]="railTooltipPlacement()"
 		(click)="onItemClick($event)"
 	>
 		@if (item().icon) {
 			<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+		} @else if (railInitial()) {
+			<span class="hub-nav-item__initial" aria-hidden="true">{{ railInitial() }}</span>
 		}
 		<span class="hub-nav-item__label" [hubOverflowTooltip]="item().label">{{ item().label }}</span>
 		@if (item().badge) {
@@ -42,10 +46,16 @@
 			[attr.tabindex]="item().disabled ? -1 : 0"
 			[attr.aria-disabled]="item().disabled || null"
 			[attr.aria-current]="isActive() ? 'page' : null"
+			[attr.aria-expanded]="showCaret() ? null : isExpanded()"
+			[attr.aria-haspopup]="showCaret() ? null : true"
+			[tooltip]="railTooltip()"
+			[placement]="railTooltipPlacement()"
 			(click)="onRouteItemClick($event)"
 		>
 			@if (item().icon) {
 				<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+			} @else if (railInitial()) {
+				<span class="hub-nav-item__initial" aria-hidden="true">{{ railInitial() }}</span>
 			}
 			<span class="hub-nav-item__label" [hubOverflowTooltip]="item().label">{{ item().label }}</span>
 			@if (item().badge) {
@@ -61,7 +71,7 @@
 				[class.hub-nav-item__caret-button--expanded]="isExpanded()"
 				[class.hub-nav-item__caret-button--disabled]="item().disabled"
 				[attr.tabindex]="item().disabled ? -1 : 0"
-				[attr.aria-label]="'Toggle ' + item().label"
+				[attr.aria-label]="caretAriaLabel()"
 				[attr.aria-expanded]="isExpanded()"
 				[attr.aria-haspopup]="true"
 				[attr.aria-disabled]="item().disabled || null"
@@ -83,10 +93,14 @@
 		[attr.aria-haspopup]="true"
 		[attr.tabindex]="item().disabled ? -1 : 0"
 		[attr.aria-disabled]="item().disabled || null"
+		[tooltip]="railTooltip()"
+		[placement]="railTooltipPlacement()"
 		(click)="onItemClick($event)"
 	>
 		@if (item().icon) {
 			<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+		} @else if (railInitial()) {
+			<span class="hub-nav-item__initial" aria-hidden="true">{{ railInitial() }}</span>
 		}
 		<span class="hub-nav-item__label" [hubOverflowTooltip]="item().label">{{ item().label }}</span>
 		@if (item().badge) {
@@ -105,10 +119,14 @@
 		[class.hub-nav-item__link--disabled]="item().disabled"
 		[attr.tabindex]="item().disabled ? -1 : 0"
 		[attr.aria-disabled]="item().disabled || null"
+		[tooltip]="railTooltip()"
+		[placement]="railTooltipPlacement()"
 		(click)="onItemClick($event)"
 	>
 		@if (item().icon) {
 			<span class="hub-nav-item__icon" [class]="item().icon" aria-hidden="true"></span>
+		} @else if (railInitial()) {
+			<span class="hub-nav-item__initial" aria-hidden="true">{{ railInitial() }}</span>
 		}
 		<span class="hub-nav-item__label" [hubOverflowTooltip]="item().label">{{ item().label }}</span>
 		@if (item().badge) {

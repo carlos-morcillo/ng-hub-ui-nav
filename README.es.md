@@ -68,6 +68,7 @@ Esta biblioteca forma parte del ecosistema **ng-hub-ui**:
 - Estados activos sincronizados con Angular Router.
 - Directivas de scroll-spy para documentación y páginas de una sola vista.
 - Soporte de `sticky` en navegación vertical.
+- **Rail de iconos de escritorio** — el input bidireccional `rail` colapsa una navegación vertical a `--hub-nav-rail-width` (4rem) mostrando solo iconos: las etiquetas aparecen como tooltips, los grupos accordion se abren como flyouts en overlay al hacer clic, y por debajo de `collapseBreakpoint` sigue ganando el comportamiento offcanvas. Incluye un toggle en el borde por defecto (`config.railToggle: false` para aportar el tuyo), totalmente tematizable con `--hub-nav-rail-toggle-*`, flecha SVG reemplazable incluida. La biblioteca no persiste nada; `railChange` permite a la aplicación guardar la preferencia.
 - Sistema de acento semántico `variant` (`primary` / `success` / `danger` / `warning` / `info`, además de cualquier acento personalizado) que recolorea los estados hover/activo — replica el de `<hub-panels>`.
 - Personalización completa mediante variables CSS `--hub-nav-*`.
 
@@ -156,6 +157,23 @@ export class ExampleComponent {
 </section>
 ```
 
+### Rail de iconos colapsado
+
+```html
+<hub-nav
+	[items]="items"
+	[(rail)]="rail"
+	[config]="{ orientation: 'vertical', verticalExpandMode: 'accordion' }"
+>
+	<!-- El contexto del slot expone el estado del rail, p. ej. para cambiar el logo por una marca -->
+	<ng-template hubNavStart let-rail="rail">
+		<span class="brand">{{ rail ? 'A' : 'Acme ERP' }}</span>
+	</ng-template>
+</hub-nav>
+```
+
+En el borde exterior de la columna primaria se incluye un botón de colapso: una flecha dentro de un contenedor, gobernado por completo por los tokens `--hub-nav-rail-toggle-*` (tamaño, padding, borde, radius, colores, sombra, offsets y el propio glifo vía la máscara SVG `--hub-nav-rail-toggle-icon`). Con `config.railToggle: false` se oculta y `[(rail)]` se controla desde un control propio. Con el rail activo, el ancho del host es `--hub-nav-rail-width` (4rem por defecto), las etiquetas conservan su nombre accesible y aparecen como tooltips, y los grupos se abren como flyouts en overlay al hacer clic. Por debajo de `collapseBreakpoint` el flag se ignora — el móvil mantiene el offcanvas. `railChange` notifica cada cambio (toggle integrado incluido) para que la aplicación persista la preferencia.
+
 ## Referencia de API
 
 ### `HubNavComponent`
@@ -169,6 +187,7 @@ export class ExampleComponent {
 | `navClass` | `string` | `''` | Clase adicional aplicada al `<nav>` interno. |
 | `itemTemplate` | `TemplateRef<unknown> \| null` | `null` | Plantilla opcional para renderizar items. |
 | `autoOpenFromRoute` | `boolean` | `false` | Abre dropdowns/paneles en función de la ruta activa. |
+| `rail` | `boolean` (bidireccional, `model`) | `false` | Rail de iconos solo de escritorio para navegaciones verticales. Se ignora por debajo de `collapseBreakpoint`. Se enlaza con `[(rail)]`. |
 | `variant` | `'primary' \| 'success' \| 'danger' \| 'warning' \| 'info' \| string` | `'primary'` | Acento semántico para los estados hover/activo. Los valores integrados usan los tintes del design-system; cualquier string personalizado se resuelve mediante `--hub-sys-color-<variant>`. |
 
 #### Outputs
@@ -180,6 +199,7 @@ export class ExampleComponent {
 | `dropdownClose` | `OutputEmitterRef<HubNavItem>` | Se emite cuando se cierra un dropdown. |
 | `mobileToggle` | `OutputEmitterRef<boolean>` | Se emite al abrir o cerrar el panel responsive. |
 | `panelChange` | `OutputEmitterRef<HubNavPanelEvent>` | Se emite al abrir, cerrar o navegar dentro de paneles. |
+| `railChange` | `OutputEmitterRef<boolean>` | Se emite cuando el modelo `rail` cambia — persístelo en la aplicación para restaurar el rail al arrancar. |
 
 ### `HubNavConfig`
 
@@ -197,8 +217,13 @@ interface HubNavConfig {
 	panelMaxVisible: number;
 	sidebarSide: 'left' | 'right';
 	panelWidth: string;
+	dropdownRenderMode: 'inline' | 'overlay';
+	labels?: Partial<HubNavLabels>;
 }
 ```
+
+`labels` sobrescribe por instancia las cadenas accesibles integradas (`toggleNavigation`, `closeNavigation`, `goBack`, `closePanel`, `toggleSection` — esta última admite el marcador `{label}`). Sin sobrescritura, cada etiqueta se resuelve desde las claves compartidas `HUBUI.NAV.*` (`provideHubTranslationAdapter()` de `ng-hub-ui-utils`) y finalmente cae al inglés.
+
 
 ### `HubNavItem`
 

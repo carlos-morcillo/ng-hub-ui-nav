@@ -1,4 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, output, computed, TemplateRef, ElementRef, inject } from '@angular/core';
+import { HubNavStateService } from '../../services/nav-state.service';
+import { HUB_NAV_DEFAULT_LABELS } from '../../models/nav-labels.model';
 import { HubNavDropdownRenderMode } from '../../models/nav-config.model';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavPanelState } from '../../models/nav-panel-state.model';
@@ -75,6 +77,18 @@ export class HubNavPanelComponent {
 
 	/** Host element reference. */
 	private readonly el = inject(ElementRef<HTMLElement>);
+
+	/**
+	 * Owning nav state, absent when the panel is instantiated standalone;
+	 * labels then fall back to the English defaults.
+	 */
+	private readonly state = inject(HubNavStateService, { optional: true });
+
+	/** Accessible label of the back button, resolved through the nav labels. */
+	readonly backLabel = computed(() => this.state?.labels().goBack ?? HUB_NAV_DEFAULT_LABELS.goBack);
+
+	/** Accessible label of the close button, resolved through the nav labels. */
+	readonly closeLabel = computed(() => this.state?.labels().closePanel ?? HUB_NAV_DEFAULT_LABELS.closePanel);
 
 	/** The label displayed in the panel header. */
 	readonly currentLabel = computed(() => this.panel().parentItem.label);

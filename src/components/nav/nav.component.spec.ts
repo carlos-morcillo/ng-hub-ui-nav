@@ -287,4 +287,118 @@ describe('HubNavComponent', () => {
 		});
 	});
 
+	describe('rail mode', () => {
+		beforeEach(() => {
+			componentRef.setInput('config', { orientation: 'vertical' });
+			fixture.detectChanges();
+		});
+
+		it('should apply the rail class when rail is enabled on a vertical nav', () => {
+			componentRef.setInput('rail', true);
+			fixture.detectChanges();
+			expect(fixture.nativeElement.classList.contains('hub-nav--rail')).toBe(true);
+		});
+
+		it('should not apply the rail class on a horizontal nav', () => {
+			componentRef.setInput('config', { orientation: 'horizontal' });
+			componentRef.setInput('rail', true);
+			fixture.detectChanges();
+			expect(fixture.nativeElement.classList.contains('hub-nav--rail')).toBe(false);
+		});
+
+		it('should ignore rail below the collapse breakpoint', () => {
+			componentRef.setInput('rail', true);
+			fixture.detectChanges();
+			component.state.setCollapsed(true);
+			fixture.detectChanges();
+			expect(fixture.nativeElement.classList.contains('hub-nav--rail')).toBe(false);
+		});
+
+		it('should drop the inline full width so the rail token controls the host width', () => {
+			expect(fixture.nativeElement.style.width).toBe('100%');
+			componentRef.setInput('rail', true);
+			fixture.detectChanges();
+			expect(fixture.nativeElement.style.width).toBe('');
+		});
+
+		it('should expose the rail state to the start and end slot contexts', () => {
+			componentRef.setInput('rail', true);
+			fixture.detectChanges();
+			expect(component.startContext().rail).toBe(true);
+			expect(component.endContext().rail).toBe(true);
+		});
+
+		it('should force the overlay dropdown render mode while rail is active', () => {
+			expect(component.dropdownRenderMode()).toBe('inline');
+			componentRef.setInput('rail', true);
+			fixture.detectChanges();
+			expect(component.dropdownRenderMode()).toBe('overlay');
+		});
+	});
+
+	describe('built-in rail toggle', () => {
+		beforeEach(() => {
+			componentRef.setInput('config', { orientation: 'vertical' });
+			fixture.detectChanges();
+		});
+
+		const toggleButton = (): HTMLButtonElement | null =>
+			fixture.nativeElement.querySelector('hub-nav-rail-toggle button');
+
+		it('should render on a vertical desktop nav by default', () => {
+			expect(toggleButton()).not.toBeNull();
+		});
+
+		it('should not render when disabled through the config', () => {
+			componentRef.setInput('config', { orientation: 'vertical', railToggle: false });
+			fixture.detectChanges();
+			expect(toggleButton()).toBeNull();
+		});
+
+		it('should not render on a horizontal nav', () => {
+			componentRef.setInput('config', { orientation: 'horizontal' });
+			fixture.detectChanges();
+			expect(toggleButton()).toBeNull();
+		});
+
+		it('should not render below the collapse breakpoint', () => {
+			component.state.setCollapsed(true);
+			fixture.detectChanges();
+			expect(toggleButton()).toBeNull();
+		});
+
+		it('should flip the rail state and report it through railChange', () => {
+			const changes: boolean[] = [];
+			component.rail.subscribe((value) => changes.push(value));
+
+			toggleButton()!.click();
+			fixture.detectChanges();
+			expect(fixture.nativeElement.classList.contains('hub-nav--rail')).toBe(true);
+
+			toggleButton()!.click();
+			fixture.detectChanges();
+			expect(fixture.nativeElement.classList.contains('hub-nav--rail')).toBe(false);
+			expect(changes).toEqual([true, false]);
+		});
+
+		it('should announce the expanded state and swap its accessible label', () => {
+			expect(toggleButton()!.getAttribute('aria-expanded')).toBe('true');
+			expect(toggleButton()!.getAttribute('aria-label')).toBe('Collapse navigation');
+
+			toggleButton()!.click();
+			fixture.detectChanges();
+			expect(toggleButton()!.getAttribute('aria-expanded')).toBe('false');
+			expect(toggleButton()!.getAttribute('aria-label')).toBe('Expand navigation');
+		});
+
+		it('should pick up label overrides provided through the config input', () => {
+			componentRef.setInput('config', {
+				orientation: 'vertical',
+				labels: { collapseNavigation: 'Plegar navegación' }
+			});
+			fixture.detectChanges();
+			expect(toggleButton()!.getAttribute('aria-label')).toBe('Plegar navegación');
+		});
+	});
+
 });

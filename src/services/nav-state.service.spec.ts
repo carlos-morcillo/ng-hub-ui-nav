@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HubTranslationService, HUB_TRANSLATION_CONFIG } from 'ng-hub-ui-utils';
 import { HubNavStateService } from './nav-state.service';
 import { HubNavItem } from '../models/nav-item.model';
 
@@ -454,4 +455,135 @@ describe('HubNavStateService', () => {
 		});
 	});
 
+	describe('rail mode', () => {
+		const verticalConfig = () => {
+			service.setConfig({
+				...service.config(),
+				orientation: 'vertical',
+				verticalExpandMode: 'accordion'
+			});
+		};
+
+		it('should not be active by default', () => {
+			expect(service.railActive()).toBe(false);
+		});
+
+		it('should activate for a vertical nav when rail is set', () => {
+			verticalConfig();
+			service.setRail(true);
+			expect(service.railActive()).toBe(true);
+		});
+
+		it('should stay inactive for a horizontal nav', () => {
+			service.setRail(true);
+			expect(service.railActive()).toBe(false);
+		});
+
+		it('should be ignored below the collapse breakpoint', () => {
+			verticalConfig();
+			service.setRail(true);
+			service.setCollapsed(true);
+			expect(service.railActive()).toBe(false);
+		});
+
+		it('should resolve accordion items to flyout while active', () => {
+			verticalConfig();
+			const item: HubNavItem = {
+				id: 'group',
+				label: 'Group',
+				type: 'dropdown',
+				children: [{ id: 'child', label: 'Child', type: 'link', route: '/child' }]
+			};
+			expect(service.getEffectiveExpandMode(item)).toBe('accordion');
+			service.setRail(true);
+			expect(service.getEffectiveExpandMode(item)).toBe('flyout');
+		});
+
+		it('should keep the mobile accordion fallback when collapsed', () => {
+			verticalConfig();
+			service.setRail(true);
+			service.setCollapsed(true);
+			const item: HubNavItem = {
+				id: 'group',
+				label: 'Group',
+				type: 'dropdown',
+				children: [{ id: 'child', label: 'Child', type: 'link', route: '/child' }]
+			};
+			expect(service.getEffectiveExpandMode(item)).toBe('accordion');
+		});
+
+		it('should force the click trigger while active', () => {
+			service.setConfig({ ...service.config(), orientation: 'vertical', dropdownTrigger: 'hover' });
+			service.setRail(true);
+			expect(service.dropdownTrigger()).toBe('click');
+		});
+
+		it('should close open dropdowns when the rail state flips', () => {
+			verticalConfig();
+			service.openDropdown('products');
+			service.setRail(true);
+			expect(service.isDropdownOpen('products')).toBe(false);
+		});
+	});
+
+	describe('labels', () => {
+		it('should resolve the English defaults', () => {
+			const labels = service.labels();
+			expect(labels.toggleNavigation).toBe('Toggle navigation');
+			expect(labels.closeNavigation).toBe('Close navigation');
+			expect(labels.goBack).toBe('Go back');
+			expect(labels.closePanel).toBe('Close panel');
+			expect(labels.collapseNavigation).toBe('Collapse navigation');
+			expect(labels.expandNavigation).toBe('Expand navigation');
+		});
+
+		it('should interpolate the item label into the section toggle label', () => {
+			expect(service.toggleSectionLabel('Products')).toBe('Toggle Products');
+		});
+
+		it('should prefer labels provided through the config', () => {
+			service.setConfig({
+				...service.config(),
+				labels: { closeNavigation: 'Cerrar navegación', toggleSection: 'Alternar {label}' }
+			});
+			expect(service.labels().closeNavigation).toBe('Cerrar navegación');
+			expect(service.toggleSectionLabel('Productos')).toBe('Alternar Productos');
+			expect(service.labels().goBack).toBe('Go back');
+		});
+	});
+
+});
+
+describe('HubNavStateService with the shared translation dictionary', () => {
+	let service: HubNavStateService;
+	let translations: HubTranslationService;
+
+	beforeEach(() => {
+		TestBed.configureTestingModule({
+			providers: [
+				HubNavStateService,
+				HubTranslationService,
+				{
+					provide: HUB_TRANSLATION_CONFIG,
+					useValue: {
+						dictionaries: {
+							en: { HUBUI: { NAV: { CLOSE_NAVIGATION: 'Dismiss navigation' } } }
+						}
+					}
+				}
+			]
+		});
+		service = TestBed.inject(HubNavStateService);
+		translations = TestBed.inject(HubTranslationService);
+	});
+
+	it('should resolve labels from HUBUI.NAV keys', () => {
+		expect(service.labels().closeNavigation).toBe('Dismiss navigation');
+		expect(service.labels().goBack).toBe('Go back');
+	});
+
+	it('should update labels when the dictionary emits a new language', () => {
+		translations.setTranslations({ HUBUI: { NAV: { CLOSE_NAVIGATION: 'Cerrar navegación' } } });
+		expect(service.labels().closeNavigation).toBe('Cerrar navegación');
+	});
 });

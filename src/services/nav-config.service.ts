@@ -17,7 +17,8 @@ const DEFAULT_NAV_CONFIG: HubNavConfig = {
 	panelMaxVisible: 3,
 	sidebarSide: 'left',
 	panelWidth: '16rem',
-	dropdownRenderMode: 'inline'
+	dropdownRenderMode: 'inline',
+	railToggle: true
 };
 
 /**

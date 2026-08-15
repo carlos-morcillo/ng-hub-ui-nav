@@ -158,6 +158,34 @@ La barra indicadora del item activo (`--hub-nav-item-active-indicator-*`) solo s
 | `--hub-nav-mobile-root-padding-inline` | `component-defined` |
 | `--hub-nav-mobile-shadow` | `component-defined` |
 
+## Rail (desktop icon-only sidebar)
+
+| Variable | Default |
+|---|---|
+| `--hub-nav-rail-width` | `4rem` |
+| `--hub-nav-rail-transition` | `width 0.2s ease-in-out` |
+
+### Rail toggle (built-in collapse/expand button)
+
+| Variable | Default |
+|---|---|
+| `--hub-nav-rail-toggle-size` | `1.75rem` |
+| `--hub-nav-rail-toggle-padding` | `0.25rem` |
+| `--hub-nav-rail-toggle-color` | `var(--hub-nav-item-color, #212529)` |
+| `--hub-nav-rail-toggle-bg` | `var(--hub-sys-surface-elevated, #fff)` |
+| `--hub-nav-rail-toggle-hover-color` | `var(--hub-nav-item-hover-color, #0d6efd)` |
+| `--hub-nav-rail-toggle-hover-bg` | `var(--hub-nav-item-hover-bg, rgba(0, 0, 0, 0.04))` |
+| `--hub-nav-rail-toggle-border-width` | `1px` |
+| `--hub-nav-rail-toggle-border-color` | `var(--hub-nav-border-color, #dee2e6)` |
+| `--hub-nav-rail-toggle-border-radius` | `var(--hub-ref-radius-pill, 50rem)` |
+| `--hub-nav-rail-toggle-shadow` | `var(--hub-sys-shadow-sm, 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075))` |
+| `--hub-nav-rail-toggle-icon` | chevron SVG (`url(...)` mask, replaceable) |
+| `--hub-nav-rail-toggle-icon-size` | `0.875em` |
+| `--hub-nav-rail-toggle-inset-block` | `50%` |
+| `--hub-nav-rail-toggle-inset-inline` | `calc(var(--hub-nav-rail-toggle-size, 1.75rem) / -2)` |
+| `--hub-nav-rail-toggle-zindex` | `calc(var(--hub-nav-panel-zindex, 1000) + 1)` |
+| `--hub-nav-rail-toggle-transition` | `var(--hub-sys-transition-fast, all 0.15s ease-in-out)` |
+
 ## Accordion y Panel Mode
 
 | Variable | Default |

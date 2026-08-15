@@ -1,7 +1,10 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { HubTranslationService } from 'ng-hub-ui-utils';
 import { HubNavItem } from '../models/nav-item.model';
 import { HubNavConfig, HubNavVerticalExpandMode } from '../models/nav-config.model';
 import { HubNavPanelState } from '../models/nav-panel-state.model';
+import { HUB_NAV_DEFAULT_LABELS, HUB_NAV_LABEL_KEYS, HubNavLabels } from '../models/nav-labels.model';
 
 /**
  * Internal state management service for a single `hub-nav` instance.
@@ -30,7 +33,8 @@ export class HubNavStateService {
 		panelMaxVisible: 3,
 		sidebarSide: 'left',
 		panelWidth: '16rem',
-		dropdownRenderMode: 'inline'
+		dropdownRenderMode: 'inline',
+		railToggle: true
 	});
 
 	/** Set of dropdown item IDs that are currently open. */
@@ -41,6 +45,24 @@ export class HubNavStateService {
 
 	/** Whether the viewport is below the collapse breakpoint. */
 	private _collapsed = signal(false);
+
+	/** Whether the desktop icon rail is requested by the host. */
+	private _rail = signal(false);
+
+	/**
+	 * Optional bridge to the shared Hub UI dictionary. Absent when the app
+	 * does not register `provideHubTranslationAdapter()`.
+	 */
+	private readonly translationSvc = inject(HubTranslationService, { optional: true });
+
+	/**
+	 * Re-evaluates the label resolution whenever the external dictionary emits
+	 * a new language. The emitted value itself is unused; reading the signal
+	 * inside `labels` is what creates the dependency.
+	 */
+	private readonly translationSnapshot = this.translationSvc
+		? toSignal(this.translationSvc.translationObserver, { initialValue: null })
+		: signal(null).asReadonly();
 
 	/** Stack of open panels for panel expand mode. */
 	private _panelStack = signal<HubNavPanelState[]>([]);
@@ -57,6 +79,33 @@ export class HubNavStateService {
 	/** Readonly collapsed signal. */
 	readonly collapsed = this._collapsed.asReadonly();
 
+	/** Readonly rail request signal (the raw host input, before gating). */
+	readonly rail = this._rail.asReadonly();
+
+	/**
+	 * Whether the icon rail is effectively active. The rail is desktop-only
+	 * and vertical-only: below the collapse breakpoint the offcanvas behavior
+	 * always wins, and a horizontal nav has no rail at all.
+	 */
+	readonly railActive = computed(
+		() => this._rail() && !this._collapsed() && this._config().orientation === 'vertical'
+	);
+
+	/**
+	 * Accessible labels for the nav's built-in controls. Per label the
+	 * resolution order is: instance override (`config.labels`), shared
+	 * `HUBUI.NAV.*` dictionary key, English fallback.
+	 */
+	readonly labels = computed<HubNavLabels>(() => {
+		this.translationSnapshot();
+		const overrides = this._config().labels ?? {};
+		const resolved = {} as HubNavLabels;
+		(Object.keys(HUB_NAV_DEFAULT_LABELS) as Array<keyof HubNavLabels>).forEach((name) => {
+			resolved[name] = overrides[name] ?? this.translate(HUB_NAV_LABEL_KEYS[name]) ?? HUB_NAV_DEFAULT_LABELS[name];
+		});
+		return resolved;
+	});
+
 	/** Readonly panel stack signal. */
 	readonly panelStack = this._panelStack.asReadonly();
 
@@ -69,8 +118,50 @@ export class HubNavStateService {
 	/** Computed vertical expand mode shortcut. */
 	readonly verticalExpandMode = computed(() => this._config().verticalExpandMode);
 
-	/** Computed dropdown trigger shortcut. */
-	readonly dropdownTrigger = computed(() => this._config().dropdownTrigger);
+	/**
+	 * Computed dropdown trigger shortcut. The rail forces the click trigger:
+	 * hover-triggered overlay flyouts need pointer hand-off between separate
+	 * DOM trees and are explicitly out of the rail's scope.
+	 */
+	readonly dropdownTrigger = computed(() => (this.railActive() ? 'click' : this._config().dropdownTrigger));
+
+	/**
+	 * Builds the section-toggle label for an item, replacing the `{label}`
+	 * placeholder with the item's own label.
+	 *
+	 * @param itemLabel - Visible label of the section item.
+	 * @returns Resolved accessible label for the caret/toggle control.
+	 */
+	toggleSectionLabel(itemLabel: string): string {
+		return this.labels().toggleSection.replace('{label}', itemLabel);
+	}
+
+	/**
+	 * Reads a translation from the shared dictionary, normalizing empty and
+	 * non-string results to `undefined` so callers can chain fallbacks.
+	 *
+	 * @param key - Dot-separated dictionary key.
+	 * @returns The translated string, or `undefined` when unavailable.
+	 */
+	private translate(key: string): string | undefined {
+		const value = this.translationSvc?.getTranslation(key);
+		return typeof value === 'string' && value.length > 0 ? value : undefined;
+	}
+
+	/**
+	 * Sets the desktop rail request from the host component. Flipping the
+	 * state closes every open dropdown: an inline accordion expanded before
+	 * the switch would otherwise reappear as an unexpected open flyout.
+	 *
+	 * @param rail - Whether the icon rail is requested.
+	 */
+	setRail(rail: boolean): void {
+		if (this._rail() === rail) {
+			return;
+		}
+		this._rail.set(rail);
+		this.closeAllDropdowns();
+	}
 
 	/**
 	 * Updates the resolved configuration.
@@ -474,6 +565,11 @@ export class HubNavStateService {
 		// On mobile (collapsed), panel mode falls back to accordion
 		if (mode === 'panel' && this._collapsed()) {
 			return 'accordion';
+		}
+		// The rail has no room for inline expansion: accordion sections open
+		// as overlay flyouts instead. Panel mode keeps its side panels.
+		if (mode === 'accordion' && this.railActive()) {
+			return 'flyout';
 		}
 		return mode;
 	}

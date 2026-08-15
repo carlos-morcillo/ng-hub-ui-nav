@@ -6,6 +6,7 @@
 export * from './models/nav-config.model';
 export * from './models/nav-events.model';
 export * from './models/nav-item.model';
+export * from './models/nav-labels.model';
 export * from './models/nav-panel-state.model';
 export * from './models/nav-template-context.model';
 

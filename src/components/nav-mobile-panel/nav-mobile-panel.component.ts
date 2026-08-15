@@ -1,5 +1,7 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, ChangeDetectionStrategy, input, output, TemplateRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, inject, input, output, TemplateRef } from '@angular/core';
+import { HubNavStateService } from '../../services/nav-state.service';
+import { HUB_NAV_DEFAULT_LABELS } from '../../models/nav-labels.model';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavCollapseMode, HubNavOffcanvasPosition } from '../../models/nav-config.model';
 import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.component';
@@ -31,6 +33,15 @@ import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.componen
 	styleUrl: './nav-mobile-panel.component.scss'
 })
 export class HubNavMobilePanelComponent {
+	/**
+	 * Owning nav state, absent when the panel is instantiated standalone;
+	 * labels then fall back to the English defaults.
+	 */
+	private readonly state = inject(HubNavStateService, { optional: true });
+
+	/** Accessible label of the close button, resolved through the nav labels. */
+	readonly closeLabel = computed(() => this.state?.labels().closeNavigation ?? HUB_NAV_DEFAULT_LABELS.closeNavigation);
+
 	/** Navigation items to render in the panel. */
 	readonly items = input.required<HubNavItem[]>();
 

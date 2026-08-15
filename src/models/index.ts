@@ -1,4 +1,5 @@
 export * from './nav-item.model';
+export * from './nav-labels.model';
 export * from './nav-config.model';
 export * from './nav-template-context.model';
 export * from './nav-events.model';

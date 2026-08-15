@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.9.0] - 2026-08-15
+
+### Added
+
+- **Desktop icon rail.** The new two-way `rail` input (`[(rail)]`) collapses a vertical nav to `--hub-nav-rail-width` (4rem by default) showing icons only. A built-in toggle sits on the outer edge of the primary column (`config.railToggle`, default `true`; disable it to ship your own) rendered as an arrow inside a themeable container — every aspect resolves from the `--hub-nav-rail-toggle-*` tokens: size, padding, border, radius, colors, shadow, offsets, z-index, transition and the arrow itself (an SVG `mask-image` replaceable through `--hub-nav-rail-toggle-icon`). Labels keep their accessible name and surface as tooltips on hover; accordion groups open as click-triggered overlay flyouts; drill-down panels keep working beside the rail. Below `collapseBreakpoint` the flag is ignored and the offcanvas behavior always wins. The library persists nothing — `railChange` reports flips so the host app owns the toggle and storage. Start/end slot and item template contexts now expose a `rail` flag, and two tokens ship with it: `--hub-nav-rail-width` and `--hub-nav-rail-transition`.
+- **Localizable built-in labels.** The previously hardcoded ARIA strings (`Toggle navigation`, `Close navigation`, `Go back`, `Close panel`, `Toggle <section>`, plus the new `Collapse navigation` / `Expand navigation` of the rail toggle) now resolve from the shared `HUBUI.NAV.*` dictionary keys (via `provideHubTranslationAdapter()` from `ng-hub-ui-utils`), with per-instance overrides through the new `HubNavConfig.labels` and English fallbacks. `TOGGLE_SECTION` supports a `{label}` placeholder.
+
+### Changed
+
+- `ng-hub-ui-utils` peer floor raised to `>=22.8.1`: the rail's overlay flyouts rely on the content-sized overlay clipping fix shipped there, and the shared translation adapter (`provideHubTranslationAdapter`) arrived in 22.8.0.
+
 ## [22.8.4] - 2026-08-13
 
 ### Fixed

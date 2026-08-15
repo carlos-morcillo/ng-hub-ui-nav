@@ -1,3 +1,5 @@
+import { HubNavLabels } from './nav-labels.model';
+
 /**
  * Configuration for the `hub-nav` component.
  * All properties are optional — defaults are applied via `HubNavConfigService`.
@@ -104,6 +106,21 @@ export interface HubNavConfig {
 	 * @default 'inline'
 	 */
 	dropdownRenderMode: HubNavDropdownRenderMode;
+
+	/**
+	 * Whether the built-in rail toggle is rendered on the outer edge of the
+	 * primary column of a vertical desktop nav. Set to `false` when the app
+	 * provides its own toggle (e.g. in the `hubNavStart` slot).
+	 * @default true
+	 */
+	railToggle?: boolean;
+
+	/**
+	 * Per-instance overrides for the nav's built-in accessible labels.
+	 * Labels omitted here resolve from the shared `HUBUI.NAV.*` dictionary
+	 * keys and finally from the English defaults.
+	 */
+	labels?: Partial<HubNavLabels>;
 }
 
 /** Orientation of the navigation layout. */

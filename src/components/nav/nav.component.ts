@@ -2,6 +2,7 @@ import {
 	Component,
 	ChangeDetectionStrategy,
 	input,
+	model,
 	output,
 	inject,
 	computed,
@@ -31,6 +32,7 @@ import { HubNavItemTemplateDirective } from '../../directives/nav-item-template.
 import { HubNavTogglerComponent } from '../nav-toggler/nav-toggler.component';
 import { HubNavMobilePanelComponent } from '../nav-mobile-panel/nav-mobile-panel.component';
 import { HubNavPanelContainerComponent } from '../nav-panel-container/nav-panel-container.component';
+import { HubNavRailToggleComponent } from '../nav-rail-toggle/nav-rail-toggle.component';
 
 let hubNavOverlayOwnerCounter = 0;
 
@@ -52,7 +54,8 @@ let hubNavOverlayOwnerCounter = 0;
 		HubNavItemListComponent,
 		HubNavTogglerComponent,
 		HubNavMobilePanelComponent,
-		HubNavPanelContainerComponent
+		HubNavPanelContainerComponent,
+		HubNavRailToggleComponent
 	],
 	providers: [HubNavStateService],
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +64,7 @@ let hubNavOverlayOwnerCounter = 0;
 		'[class.hub-nav--horizontal]': 'resolvedOrientation() === "horizontal"',
 		'[class.hub-nav--vertical]': 'resolvedOrientation() === "vertical"',
 		'[class.hub-nav--collapsed]': 'isCollapsed()',
+		'[class.hub-nav--rail]': 'isRailActive()',
 		'[class.hub-nav--sticky]': 'isStickyActive()',
 		'[class.hub-nav--fixed]': 'resolvedConfig().position === "fixed"',
 		'[class.hub-nav--sidebar-left]': 'resolvedConfig().sidebarSide === "left"',
@@ -68,7 +72,7 @@ let hubNavOverlayOwnerCounter = 0;
 		'[class.hub-nav--has-panels]': 'hasPanels()',
 		'[attr.data-variant]': 'color() ?? null',
 		'[style.--hub-nav-accent]': 'groupAccent()',
-		'[style.width]': 'resolvedOrientation() === "vertical" ? "100%" : null',
+		'[style.width]': 'hostWidth()',
 		'[style.align-self]': 'resolvedOrientation() === "vertical" ? "stretch" : null',
 		'[style.--hub-nav-sticky-top]': 'resolvedConfig().stickyTop',
 		'[style.display]': 'resolvedOrientation() === "vertical" ? "flex" : null',
@@ -93,6 +97,17 @@ export class HubNavComponent implements OnInit, OnDestroy {
 
 	/** Additional CSS class for the nav container. */
 	readonly navClass = input<string>('');
+
+	/**
+	 * Desktop-only icon rail. When `true`, a vertical nav renders at rail
+	 * width (`--hub-nav-rail-width`) showing icons only; accordion sections
+	 * open as click-triggered overlay flyouts and item labels surface as
+	 * tooltips. Ignored below `collapseBreakpoint`, where the offcanvas
+	 * behavior always wins, and ignored entirely for horizontal navs.
+	 * Two-way bindable: `[(rail)]` reports flips through `railChange` so the
+	 * host can persist the preference (the library stores nothing).
+	 */
+	readonly rail = model<boolean>(false);
 
 	/** Optional custom template for rendering nav items (via input binding). */
 	readonly itemTemplate = input<TemplateRef<unknown> | null>(null);
@@ -146,12 +161,14 @@ export class HubNavComponent implements OnInit, OnDestroy {
 
 	/** Start slot context. */
 	readonly startContext = computed(() => ({
-		collapsed: this.state.collapsed()
+		collapsed: this.state.collapsed(),
+		rail: this.state.railActive()
 	}));
 
 	/** End slot context. */
 	readonly endContext = computed(() => ({
-		collapsed: this.state.collapsed()
+		collapsed: this.state.collapsed(),
+		rail: this.state.railActive()
 	}));
 
 	/** Emitted when a link item is clicked. */
@@ -231,8 +248,53 @@ export class HubNavComponent implements OnInit, OnDestroy {
 		this.resolvedOrientation() === 'horizontal' ? 'hub-nav--horizontal' : 'hub-nav--vertical'
 	);
 
-	/** Dropdown render mode forwarded to item lists. */
-	readonly dropdownRenderMode = computed(() => this.resolvedConfig().dropdownRenderMode);
+	/**
+	 * Dropdown render mode forwarded to item lists. The rail forces overlay
+	 * rendering: an inline flyout would be clipped by the narrow rail column,
+	 * and body-level overlays deliberately do not inherit the rail styling,
+	 * so flyout labels stay visible.
+	 */
+	readonly dropdownRenderMode = computed(() =>
+		this.state.railActive() ? 'overlay' : this.resolvedConfig().dropdownRenderMode
+	);
+
+	/** Whether the desktop icon rail is effectively active. */
+	readonly isRailActive = computed(() => this.state.railActive());
+
+	/**
+	 * Inline host width. Vertical navs stretch to their container; while the
+	 * rail is active the inline style is dropped so the stylesheet rule bound
+	 * to `--hub-nav-rail-width` controls the host width instead.
+	 */
+	readonly hostWidth = computed(() => {
+		if (this.resolvedOrientation() !== 'vertical') {
+			return null;
+		}
+		return this.isRailActive() ? null : '100%';
+	});
+
+	/** Mirrors the rail input into the scoped state service. */
+	private railSyncEffect = effect(() => {
+		this.state.setRail(this.rail());
+	});
+
+	/**
+	 * Whether the built-in rail toggle renders. Vertical desktop only — the
+	 * mobile top bar has its own hamburger — and removable via config for
+	 * apps that ship their own toggle.
+	 */
+	readonly showRailToggle = computed(
+		() => (this.resolvedConfig().railToggle ?? true) && this.resolvedOrientation() === 'vertical' && !this.isCollapsed()
+	);
+
+	/**
+	 * Flips the rail through the built-in toggle. Writing the model is what
+	 * emits `railChange`, so app-side persistence keeps working regardless of
+	 * which toggle (built-in or app-provided) performed the flip.
+	 */
+	onRailToggle(): void {
+		this.rail.update((value) => !value);
+	}
 
 	/** The sidebar side from resolved config. */
 	readonly sidebarSide = computed(() => this.resolvedConfig().sidebarSide);
@@ -742,7 +804,8 @@ export class HubNavComponent implements OnInit, OnDestroy {
 			ariaLabel: config.ariaLabel,
 			panelMaxVisible: config.panelMaxVisible,
 			sidebarSide: config.sidebarSide,
-			panelWidth: config.panelWidth
+			panelWidth: config.panelWidth,
+			labels: config.labels ?? null
 		});
 	}
 

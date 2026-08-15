@@ -56,4 +56,12 @@ describe('HubNavMobilePanelComponent', () => {
 
 		expect(closeSpy).toHaveBeenCalled();
 	});
+
+	it('should use the configured close-navigation label', () => {
+		const state = TestBed.inject(HubNavStateService);
+		state.setConfig({ ...state.config(), labels: { closeNavigation: 'Cerrar navegación' } });
+		fixture.detectChanges();
+		const close = fixture.nativeElement.querySelector('.hub-nav-mobile-panel__close');
+		expect(close.getAttribute('aria-label')).toBe('Cerrar navegación');
+	});
 });
