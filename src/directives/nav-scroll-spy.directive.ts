@@ -43,6 +43,35 @@ export class HubNavScrollSpyDirective implements AfterViewInit, OnDestroy {
 	private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
 	private observer: IntersectionObserver | null = null;
+
+	/** Sections currently inside the observation band. */
+	private readonly intersecting = new Set<HTMLElement>();
+
+	/** Detaches the scroll listener that catches the end of the container. */
+	private detachScroll?: () => void;
+
+	/**
+	 * Section the reader asked for, which outranks anything the geometry infers.
+	 *
+	 * A spy exists to answer "where am I" while nobody is steering. The moment somebody
+	 * clicks an entry they have answered it themselves, and the scroll that follows is a
+	 * consequence of their choice rather than new information — so inferring from it
+	 * argues with them. Worse, near the end of a page it argues and wins: several
+	 * sections share the last screen, and no threshold can tell which of them was meant.
+	 *
+	 * Held until the reader scrolls under their own steam, which is the point at which
+	 * the question becomes theirs again.
+	 */
+	private pinnedId: string | null = null;
+
+	/** Detaches the listeners that tell us the reader has taken over. */
+	private detachIntent?: () => void;
+
+	/**
+	 * Slack for "the container has nothing left to scroll". Fractional layouts and zoom
+	 * leave the last pixel or two unreachable, and an exact comparison never fires.
+	 */
+	private static readonly END_SLACK_PX = 2;
 	private activeId = signal<string | null>(null);
 	private initialized = signal<boolean>(false);
 
@@ -94,6 +123,14 @@ export class HubNavScrollSpyDirective implements AfterViewInit, OnDestroy {
 			return false;
 		}
 
+		// Their answer, not ours, until they move the page themselves.
+		this.pinnedId = sectionId;
+
+		if (sectionId !== this.activeId()) {
+			this.activeId.set(sectionId);
+			this.activeSectionChange.emit(sectionId);
+		}
+
 		target.scrollIntoView({
 			behavior,
 			block: 'start',
@@ -135,11 +172,63 @@ export class HubNavScrollSpyDirective implements AfterViewInit, OnDestroy {
 		);
 
 		sections.forEach((section) => this.observer?.observe(section));
+		this.observeScrollEnd();
 	}
 
 	private destroyObserver(): void {
 		this.observer?.disconnect();
 		this.observer = null;
+		this.intersecting.clear();
+		this.detachScroll?.();
+		this.detachScroll = undefined;
+		this.detachIntent?.();
+		this.detachIntent = undefined;
+		this.pinnedId = null;
+	}
+
+	/**
+	 * Watches for the container reaching its end, which no intersection ever announces:
+	 * the sections below the band stop moving, so nothing changes and nothing fires.
+	 */
+	private observeScrollEnd(): void {
+		const scroller = this.scrollParent();
+		const target: EventTarget = scroller === document.scrollingElement ? window : (scroller ?? window);
+		let queued = false;
+
+		const onScroll = () => {
+			if (queued) {
+				return;
+			}
+
+			queued = true;
+			requestAnimationFrame(() => {
+				queued = false;
+				this.zone.run(() => this.syncActiveSection());
+			});
+		};
+
+		this.zone.runOutsideAngular(() => target.addEventListener('scroll', onScroll, { passive: true }));
+		this.detachScroll = () => target.removeEventListener('scroll', onScroll);
+		this.observeReaderIntent();
+	}
+
+	/**
+	 * Watches for the reader taking the page over, which releases {@link pinnedId}.
+	 *
+	 * Deliberately not the `scroll` event: the smooth scroll a click starts fires that
+	 * too, and releasing on it would hand control straight back to the geometry we were
+	 * trying to overrule. A wheel, a drag or a key is the reader; a scroll is anybody.
+	 */
+	private observeReaderIntent(): void {
+		const release = () => {
+			this.pinnedId = null;
+		};
+		const events: Array<keyof WindowEventMap> = ['wheel', 'touchmove', 'keydown'];
+
+		this.zone.runOutsideAngular(() =>
+			events.forEach((name) => window.addEventListener(name, release, { passive: true }))
+		);
+		this.detachIntent = () => events.forEach((name) => window.removeEventListener(name, release));
 	}
 
 	private getSectionElements(): HTMLElement[] {
@@ -153,22 +242,95 @@ export class HubNavScrollSpyDirective implements AfterViewInit, OnDestroy {
 	}
 
 	private handleObserverEntries(entries: IntersectionObserverEntry[]): void {
-		const visible = entries
-			.filter((entry) => entry.isIntersecting)
-			.sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+		for (const entry of entries) {
+			const section = entry.target as HTMLElement;
 
-		if (visible.length === 0) {
+			if (entry.isIntersecting) {
+				this.intersecting.add(section);
+			} else {
+				this.intersecting.delete(section);
+			}
+		}
+
+		this.syncActiveSection();
+	}
+
+	/**
+	 * Decides which section the reader is on, out of the ones currently in the band.
+	 *
+	 * Two rules, each of which the ratio-only version got wrong:
+	 *
+	 * 1. **The topmost wins, not the largest slice.** Ranking by `intersectionRatio` ranks
+	 *    by how much of a section fits the band, so a short one sitting entirely inside it
+	 *    outranks the tall one the reader is actually in the middle of — and the mark
+	 *    jumps back and forth between them as the tall one scrolls through.
+	 * 2. **At the end of the scroll, the last section wins outright.** The band stops
+	 *    partway down the viewport, so once the container cannot scroll any further,
+	 *    everything below that line is unreachable: the final sections could never be
+	 *    reported at all, however long the reader stared at them. Measured on a
+	 *    seven-example page, clicking the last entry settled the mark four items above it.
+	 */
+	private syncActiveSection(): void {
+		if (this.pinnedId) {
 			return;
 		}
 
-		const top = visible[0];
-		const id = this.getSectionId(top.target as HTMLElement);
+		const sections = this.getSectionElements();
+
+		if (sections.length === 0) {
+			return;
+		}
+
+		const chosen = this.isScrolledToEnd()
+			? sections[sections.length - 1]
+			: [...this.intersecting].sort(
+					(a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top
+				)[0];
+
+		if (!chosen) {
+			return;
+		}
+
+		const id = this.getSectionId(chosen);
 		if (!id || id === this.activeId()) {
 			return;
 		}
 
 		this.activeId.set(id);
 		this.activeSectionChange.emit(id);
+	}
+
+	/** Whether the surface these sections scroll in has nothing left to give. */
+	private isScrolledToEnd(): boolean {
+		const scroller = this.scrollParent();
+
+		if (!scroller) {
+			return false;
+		}
+
+		return scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - HubNavScrollSpyDirective.END_SLACK_PX;
+	}
+
+	/**
+	 * The scrollable ancestor these sections actually move inside — often not the window,
+	 * since an application shell usually scrolls its own main column.
+	 *
+	 * @returns The nearest scrolling ancestor, or the document's scroller.
+	 */
+	private scrollParent(): HTMLElement | null {
+		let node: HTMLElement | null = this.el.nativeElement.parentElement;
+
+		while (node) {
+			const overflowY = getComputedStyle(node).overflowY;
+
+			if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+				return node;
+			}
+
+			node = node.parentElement;
+		}
+
+		return (document.scrollingElement as HTMLElement | null) ?? null;
 	}
 }
 
