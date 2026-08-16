@@ -66,6 +66,15 @@
 	box-shadow: inset 0 calc(var(--hub-nav-item-active-indicator-size, 3px) * -1) 0 var(--hub-nav-item-active-indicator-color);
 }
 
+// When the list paints a single travelling mark, the item must stop painting its own —
+// otherwise the surface it is supposed to be sliding is already there at both ends and
+// nothing appears to move. The text keeps its accent colour and weight: what travels is
+// the surface, not the emphasis.
+:host-context(.hub-nav-item-list--animated-indicator) .hub-nav-item__link--active {
+	background-color: transparent;
+	box-shadow: none;
+}
+
 // ── Compound dropdown row (route + caret split actions) ──
 .hub-nav-item__compound {
 	display: flex;

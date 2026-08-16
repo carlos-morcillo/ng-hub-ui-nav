@@ -1,3 +1,14 @@
+<!--
+	The travelling active mark. One per list, parked over whichever sibling is active
+	and moved with a transform, so the animation never touches the layout.
+
+	`aria-hidden`: it carries no information the item does not already announce through
+	`aria-current` and its own label — a screen reader gains nothing from a moving box.
+-->
+@if (showIndicator()) {
+	<span class="hub-nav-item-list__indicator" aria-hidden="true" [style]="indicatorStyle()"></span>
+}
+
 @for (item of items(); track item.id) {
 	@if (item.type === 'separator') {
 		<hub-nav-separator />

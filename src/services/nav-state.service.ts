@@ -115,6 +115,20 @@ export class HubNavStateService {
 	/** Computed orientation shortcut. */
 	readonly orientation = computed(() => this._config().orientation);
 
+	/** Whether the active mark is a single travelling element rather than one per item. */
+	readonly activeIndicator = computed(() => this._config().activeIndicator ?? false);
+
+	/** How a replaced URL — what a scroll spy writes — reaches the active mark. */
+	readonly followReplacedUrls = computed(() => this._config().followReplacedUrls ?? true);
+
+	/** Quiet period a stream of position reports must clear, or 0 to follow each one. */
+	readonly replacedUrlSettleMs = computed(() => {
+		const follow = this.followReplacedUrls();
+
+		return typeof follow === 'number' ? Math.max(0, follow) : 0;
+	});
+
+
 	/** Computed vertical expand mode shortcut. */
 	readonly verticalExpandMode = computed(() => this._config().verticalExpandMode);
 

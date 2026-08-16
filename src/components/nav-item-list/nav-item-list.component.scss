@@ -12,6 +12,62 @@
 	position: relative;
 }
 
+// ── Travelling active mark ──
+//
+// Off by default; `config.activeIndicator` turns it on. The mark normally belongs to
+// each item, so this moves the same pixels to a single node the list owns — which is
+// the only way it can travel, since nothing can animate between two elements.
+//
+// The host has to establish the coordinate system the measurements are taken in. It is
+// already `display: flex`, and `position: relative` on a flex container changes nothing
+// about how it lays its children out.
+:host(.hub-nav-item-list--animated-indicator) {
+	position: relative;
+
+	// Behind the items, which keep their own text colour and weight: only the surface
+	// moves. `top`/`left` stay at zero — the transform carries the whole position, so
+	// the browser can keep the move on the compositor.
+	.hub-nav-item-list__indicator {
+		position: absolute;
+		top: 0;
+		left: 0;
+		z-index: 0;
+		pointer-events: none;
+		border-radius: var(--hub-nav-item-border-radius, 0.375rem);
+		background-color: var(--hub-nav-item-active-bg);
+	}
+
+	// The items have to sit above it, or the mark paints over its own label.
+	> .hub-nav-item-wrapper {
+		position: relative;
+		z-index: 1;
+	}
+
+	// A report — a scroll spy naming the section under the reader, or a relayout — is not
+	// a decision, so it arrives rather than travelling.
+	&.hub-nav-item-list--indicator-snap .hub-nav-item-list__indicator {
+		transition: none;
+	}
+
+	// Withheld until the first measurement has landed, so the mark does not slide in
+	// from the list's origin on first paint — a diagonal nobody asked for, and one a
+	// server-rendered page would perform on every hydration.
+	&.hub-nav-item-list--indicator-ready .hub-nav-item-list__indicator {
+		transition: var(--hub-nav-item-active-indicator-transition, transform 0.25s ease, width 0.25s ease, height 0.25s ease);
+	}
+}
+
+// A horizontal navbar marks with an underline rather than a filled pill. The BOX stays
+// the item's, in both orientations — only the paint changes, drawn as an inset edge
+// inside it. Shrinking the element to the bar instead would fight the transform, which
+// already carries the item's own top offset.
+:host-context(.hub-nav--horizontal) .hub-nav-item-list__indicator {
+	border-radius: 0;
+	background-color: transparent;
+	box-shadow: inset 0 calc(var(--hub-nav-item-active-indicator-size, 3px) * -1) 0
+		var(--hub-nav-item-active-indicator-color);
+}
+
 // ── Dropdown panel (flyout / horizontal dropdown) ──
 .hub-nav-dropdown {
 	position: absolute;
@@ -135,5 +191,11 @@
 @media (prefers-reduced-motion: reduce) {
 	.hub-nav-accordion {
 		animation: none;
+	}
+
+	// The mark still moves — it has to, it is where the active item is — it simply
+	// arrives instead of travelling.
+	.hub-nav-item-list__indicator {
+		transition: none !important;
 	}
 }

@@ -14,8 +14,8 @@ import {
 	effect,
 	viewChildren
 } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { Subscription, filter } from 'rxjs';
+import { NavigationEnd, NavigationStart, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { HubNavItem } from '../../models/nav-item.model';
 import { HubNavDropdownRenderMode, HubNavVerticalExpandMode } from '../../models/nav-config.model';
 import { HubNavItemComponent } from '../nav-item/nav-item.component';
@@ -42,6 +42,9 @@ type HubNavOverlayPlacement = 'root-dropdown' | 'flyout';
 	host: {
 		class: 'hub-nav-item-list',
 		'[class.hub-nav-item-list--force-accordion]': 'forceAccordionMode()',
+		'[class.hub-nav-item-list--animated-indicator]': 'state.activeIndicator()',
+		'[class.hub-nav-item-list--indicator-snap]': 'indicatorSnap()',
+		'[class.hub-nav-item-list--indicator-ready]': 'indicatorMeasured()',
 		'[attr.role]': 'depth() === 0 ? "menubar" : "menu"',
 		// menubar defaults to horizontal per WAI-ARIA; a vertical sidebar must say so.
 		// Submenus (depth > 0) always stack vertically.
@@ -192,18 +195,245 @@ export class HubNavItemListComponent implements OnInit, OnDestroy {
 		return this.state.isItemActiveAmongSiblings(item, this.items(), this.currentUrl());
 	}
 
+	// ── Travelling active indicator ─────────────────────────────────────────────
+	//
+	// One element per list, parked over whichever sibling is active. Travel is only
+	// meaningful along a shared edge, so each list owns its own: entering a submenu, a
+	// drill-down panel or a collapsed rail swaps one list for another, and the mark
+	// fades in there rather than flying across a gap that is not on screen.
+	//
+	// The geometry is measured rather than derived. Items size themselves from their
+	// content, and the rail, the accordion and the viewport all resize them without
+	// the item list ever hearing about it — so the box is read from the DOM and
+	// re-read whenever it can have moved.
+
+	/** Box of the active item, in the host's coordinates. Null when nothing is active. */
+	private readonly indicatorBox = signal<{ x: number; y: number; width: number; height: number } | null>(null);
+
+	/**
+	 * Whether a first measurement has landed.
+	 *
+	 * The transition is withheld until then. Without it the indicator animates in from
+	 * the list's origin on the very first paint — a diagonal slide nobody asked for,
+	 * and one that a server-rendered page performs on every hydration.
+	 */
+	readonly indicatorMeasured = signal(false);
+
+	/**
+	 * Whether this move should arrive rather than travel.
+	 *
+	 * Travelling says "you chose to go here", and not every move is that. A scroll spy
+	 * reports where the reader already is by REPLACING the URL, where a nav link PUSHES
+	 * one; a relayout — the rail collapsing, an accordion opening above — moves the item
+	 * under a selection that never changed. Neither is a decision, so neither is narrated.
+	 *
+	 * An application that does not want its menu tracking a scroll at all turns off
+	 * `config.followReplacedUrls`, and then these moves never reach the mark to begin with.
+	 */
+	readonly indicatorSnap = signal(false);
+
+	/**
+	 * Whether the next move is a report rather than a choice. Set by whatever triggers
+	 * it — a replaced navigation, or a relayout — and read once.
+	 */
+	private nextMoveIsReported = false;
+
+	/** Pending follow of a quiet-period-gated stream of position reports. */
+	private reportedTimer?: ReturnType<typeof setTimeout>;
+
+	/** Whether this list paints a travelling mark at all. */
+	readonly showIndicator = computed(() => this.state.activeIndicator() && !!this.indicatorBox());
+
+	/** Inline geometry of the indicator. Transform only, so the move stays off the layout path. */
+	readonly indicatorStyle = computed(() => {
+		const box = this.indicatorBox();
+
+		if (!box) {
+			return null;
+		}
+
+		return {
+			transform: `translate(${box.x}px, ${box.y}px)`,
+			width: `${box.width}px`,
+			height: `${box.height}px`
+		};
+	});
+
+	/** Re-measures on anything that can move the active item, including its own resize. */
+	private resizeObserver?: ResizeObserver;
+
+	/**
+	 * Reads the active item's box out of the DOM and parks the indicator on it.
+	 *
+	 * Uses offset geometry rather than `getBoundingClientRect`, so the numbers are
+	 * already relative to the positioned host and survive the list being scrolled.
+	 */
+	private measureIndicator(): void {
+		if (!this.state.activeIndicator()) {
+			return;
+		}
+
+		const items = this.items();
+		const wrappers = this.itemWrappers();
+		const index = items.findIndex((item) => item.type !== 'separator' && this.isItemActive(item));
+
+		if (index < 0) {
+			this.indicatorBox.set(null);
+			return;
+		}
+
+		// Separators are not wrapped, so the wrapper list is shorter than the item list
+		// and their indices only coincide until the first one.
+		const wrapperIndex = items.slice(0, index).filter((item) => item.type !== 'separator').length;
+		const element = wrappers[wrapperIndex]?.nativeElement;
+
+		if (!element) {
+			return;
+		}
+
+		const next = {
+			x: element.offsetLeft,
+			y: element.offsetTop,
+			width: element.offsetWidth,
+			height: element.offsetHeight
+		};
+		const current = this.indicatorBox();
+		const moved =
+			!current ||
+			current.x !== next.x ||
+			current.y !== next.y ||
+			current.width !== next.width ||
+			current.height !== next.height;
+
+		// A re-measure that lands on the same box is not a move: it is the observer
+		// reporting a resize that did not touch us. Timing it as one would make an idle
+		// list look like a burst.
+		if (moved) {
+			this.rateIndicatorMove();
+		}
+
+		this.indicatorBox.set(next);
+	}
+
+	/**
+	 * Records why this move happened, which decides whether the mark stays on duty.
+	 *
+	 * @see {@link indicatorLive} for why a reported change gives it up.
+	 */
+	private rateIndicatorMove(): void {
+		this.indicatorSnap.set(this.indicatorMeasured() && this.nextMoveIsReported);
+		this.nextMoveIsReported = false;
+	}
+
+	/**
+	 * Re-measures on every input that can change WHICH item is active or WHERE it sits.
+	 *
+	 * Declared as a named field rather than buried in a constructor so its dependencies
+	 * are readable at the point they are registered — the list is the whole contract,
+	 * and anything missing from it is a mark left parked over the wrong item.
+	 */
+	private readonly indicatorSync = effect(() => {
+		this.items();
+		this.currentUrl();
+		this.state.orientation();
+		this.state.railActive();
+		this.state.collapsed();
+
+		this.scheduleIndicatorMeasure();
+	});
+
+	/** Measures after the browser has laid the list out, never during the same frame. */
+	private scheduleIndicatorMeasure(): void {
+		if (!this.state.activeIndicator() || typeof requestAnimationFrame !== 'function') {
+			return;
+		}
+
+
+		requestAnimationFrame(() => {
+			this.measureIndicator();
+			// A second frame before the transition is armed: the first one carries the
+			// jump into position, and arming in the same frame animates that jump.
+			requestAnimationFrame(() => this.indicatorMeasured.set(true));
+		});
+	}
+
+	/**
+	 * Takes a navigation's URL into the active state, at the eagerness the application
+	 * asked for.
+	 *
+	 * A report — a replaced URL, which is how a scroll spy names the section under the
+	 * reader — can be followed as it arrives, followed once its stream goes quiet, or
+	 * ignored. The middle case is the useful one on a long menu: the mark still says
+	 * where the reader is, it just stops walking there one item at a time while they
+	 * scroll past.
+	 *
+	 * @param url - The URL the router has just settled on.
+	 */
+	private applyUrl(url: string): void {
+		const reported = this.nextMoveIsReported;
+		this.nextMoveIsReported = false;
+
+		if (!reported) {
+			clearTimeout(this.reportedTimer);
+			this.currentUrl.set(url);
+
+			return;
+		}
+
+		if (this.state.followReplacedUrls() === false) {
+			return;
+		}
+
+		const settle = this.state.replacedUrlSettleMs();
+
+		if (settle === 0) {
+			this.nextMoveIsReported = true;
+			this.currentUrl.set(url);
+
+			return;
+		}
+
+		clearTimeout(this.reportedTimer);
+		this.reportedTimer = setTimeout(() => {
+			this.nextMoveIsReported = true;
+			this.currentUrl.set(url);
+		}, settle);
+	}
+
 	/** @inheritDoc */
 	ngOnInit(): void {
-		this.routerSub = this.router.events
-			.pipe(filter((event) => event instanceof NavigationEnd))
-			.subscribe(() => {
-				this.currentUrl.set(this.router.url);
+		// `replaceUrl` is what separates a scroll spy from a click: the spy rewrites the
+		// URL to describe where the reader already is, while a nav link pushes one
+		// because they chose to go there. Captured on start — by `NavigationEnd` the
+		// navigation object is gone.
+		this.routerSub = this.router.events.subscribe((event) => {
+			if (event instanceof NavigationStart) {
+				this.nextMoveIsReported = this.router.getCurrentNavigation()?.extras.replaceUrl === true;
+				return;
+			}
+
+			if (event instanceof NavigationEnd) {
+				this.applyUrl(this.router.url);
+			}
+		});
+
+		// The rail collapses, an accordion opens above us, the viewport reflows: all of
+		// them move the active item without changing a single signal this list reads.
+		if (this.state.activeIndicator() && typeof ResizeObserver === 'function') {
+			this.resizeObserver = new ResizeObserver(() => {
+				// The geometry moved, the selection did not: nothing to narrate.
+				this.nextMoveIsReported = true;
+				this.measureIndicator();
 			});
+			this.resizeObserver.observe(this.el.nativeElement);
+		}
 	}
 
 	/** @inheritDoc */
 	ngOnDestroy(): void {
 		this.routerSub?.unsubscribe();
+		clearTimeout(this.reportedTimer);
+		this.resizeObserver?.disconnect();
 		this.disposeAllOverlays();
 		this.removeOverlayViewportListeners();
 	}

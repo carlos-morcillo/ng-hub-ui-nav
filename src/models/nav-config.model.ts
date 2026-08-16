@@ -116,6 +116,50 @@ export interface HubNavConfig {
 	railToggle?: boolean;
 
 	/**
+	 * Whether the active mark travels between items instead of appearing and
+	 * disappearing in place.
+	 *
+	 * Off by default, and the reason is not caution: the mark is normally painted by
+	 * each item, so turning this on moves it to a single element shared by the list —
+	 * the same pixels, drawn by a different node. An application that has restyled
+	 * `.hub-nav-item__link--active` would see its rule stop applying, so this is a
+	 * change to opt into rather than to receive.
+	 *
+	 * Travel only means something between siblings, which is where the mark can move
+	 * along a shared edge. Crossing into a submenu, a drill-down panel or a collapsed
+	 * rail exchanges one list for another, and the mark fades rather than flying
+	 * across a gap that does not exist on screen.
+	 *
+	 * Honours `prefers-reduced-motion`, where it snaps into place.
+	 * @default false
+	 */
+	activeIndicator?: boolean;
+
+	/**
+	 * How eagerly the nav follows a URL that was REPLACED rather than pushed.
+	 *
+	 * A scroll spy names the section under the reader by replacing the URL as they
+	 * scroll. Following every one of those marks whatever they are looking at — the
+	 * behaviour a documentation site usually wants — but on a long menu it is also a
+	 * highlight that steps to a new item two or three times a second while the reader is
+	 * doing nothing but read: measured on a thirty-item panel, twenty changes in six
+	 * seconds of ordinary scrolling.
+	 *
+	 * - `true` — follow each report as it arrives. The default, and what every version
+	 *   before this one did.
+	 * - a **number** — follow only once the reports have been quiet for that many
+	 *   milliseconds, so a scroll lands the mark once, where the reader stopped, instead
+	 *   of walking it down the menu on the way. Worth more than it looks: the reports
+	 *   themselves arrive 300–1500ms apart, so the delay has to clear that to be felt.
+	 * - `false` — never follow. The nav marks only where the reader CHOSE to go.
+	 *
+	 * Deep links are unaffected in every case: arriving at a URL is a navigation like any
+	 * other.
+	 * @default true
+	 */
+	followReplacedUrls?: boolean | number;
+
+	/**
 	 * Per-instance overrides for the nav's built-in accessible labels.
 	 * Labels omitted here resolve from the shared `HUBUI.NAV.*` dictionary
 	 * keys and finally from the English defaults.

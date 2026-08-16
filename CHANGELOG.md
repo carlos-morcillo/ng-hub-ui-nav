@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.10.0] - 2026-08-16
+
+### Fixed
+
+- **The scroll spy could never reach the last sections of a page.** Its observation band stops partway down the viewport, so once the container has nothing left to scroll, everything below that line is unreachable — those sections could not be reported however long the reader stared at them. Clicking the final entry of a seven-example page settled the mark four items above it. The last section now wins outright once the container is at its end.
+
+- **A short section outranked the tall one the reader was actually in.** Selection went by `intersectionRatio`, which measures how much of a section fits the band rather than which one comes first, so a small block sitting entirely inside it beat a long one scrolling through — and the mark bounced between them. The topmost section in the band wins now.
+
+### Added
+
+- **`config.followReplacedUrls` — how eagerly the nav follows a scroll spy.** A spy names the section under the reader by REPLACING the URL as they scroll, and following every one of those steps the highlight down a long menu two or three times a second while they are doing nothing but read: measured on a thirty-item panel, twenty changes in six seconds. The option takes `true` (follow each report, the previous and default behaviour), a **number** of milliseconds (follow only once the reports go quiet, so a scroll lands the mark once where the reader stopped) or `false` (never follow; the nav marks only where they chose to go). On the same panel, a 400ms setting turns those twenty changes into one. Deep links are unaffected in every case.
+
+- **`config.activeIndicator` — the active mark can travel between items** instead of appearing and disappearing in place (off by default). One element per list, parked over whichever sibling is active and moved with a `transform`, so the animation never touches the layout. Duration and easing come from the new `--hub-nav-item-active-indicator-transition`; the surface and the underline keep the tokens they already had, and the item keeps its accent colour and weight — what travels is the surface, not the emphasis.
+
+    Opt-in rather than default because the mark is normally painted by each item: turning it on moves the same pixels to a node the list owns, so an application that had restyled `.hub-nav-item__link--active` would see its rule stop applying.
+
+    Travelling says "you chose to go here", so it is reserved for that. A report — a replaced URL, or a relayout such as the rail collapsing or an accordion opening above — moves the mark without animating it: neither is a decision. Travel also only means something between siblings, along an edge they share; crossing into a submenu, a drill-down panel or a collapsed rail exchanges one list for another, so each list owns its own mark. The geometry is measured rather than derived — items size themselves from their content, and the rail, the accordion and the viewport all resize them without the list ever hearing about it — and re-measured through a `ResizeObserver` for that reason. Honours `prefers-reduced-motion`.
+
 ## [22.9.1] - 2026-08-16
 
 ### Fixed

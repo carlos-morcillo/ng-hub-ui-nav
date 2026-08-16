@@ -18,7 +18,9 @@ const DEFAULT_NAV_CONFIG: HubNavConfig = {
 	sidebarSide: 'left',
 	panelWidth: '16rem',
 	dropdownRenderMode: 'inline',
-	railToggle: true
+	railToggle: true,
+	activeIndicator: false,
+	followReplacedUrls: true
 };
 
 /**

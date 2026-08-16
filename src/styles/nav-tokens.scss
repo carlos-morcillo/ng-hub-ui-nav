@@ -82,6 +82,11 @@
 	--hub-nav-item-active-font-weight: var(--hub-ref-font-weight-semibold, 600);
 	--hub-nav-item-active-indicator-color: var(--hub-nav-accent);
 	--hub-nav-item-active-indicator-size: 3px;
+	// How the mark travels when `config.activeIndicator` is on. Names every animated
+	// property explicitly rather than using `all`: the mark also changes background and
+	// box-shadow when it crosses between orientations, and transitioning those turns a
+	// slide into a smear.
+	--hub-nav-item-active-indicator-transition: transform 0.25s ease, width 0.25s ease, height 0.25s ease;
 
 	// ── Item Disabled ──
 	--hub-nav-item-disabled-color: var(--hub-sys-text-muted, #6c757d);
