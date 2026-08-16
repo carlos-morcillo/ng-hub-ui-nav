@@ -613,7 +613,7 @@ export class HubNavStateService {
 			return true;
 		}
 
-		const activePath = activeRoute.split('#')[0].split('?')[0];
+		const activePath = this.normalizePath(activeRoute.split('#')[0].split('?')[0]);
 
 		if (route === activePath) {
 			return true;
@@ -640,7 +640,23 @@ export class HubNavStateService {
 			return null;
 		}
 
-		return Array.isArray(item.route) ? item.route.join('/') : item.route;
+		return this.normalizePath(Array.isArray(item.route) ? item.route.join('/') : item.route);
+	}
+
+	/**
+	 * A path in the one form these comparisons can trust: no trailing slash, except for the root.
+	 *
+	 * `/products` and `/products/` are the same place, and an application is free to decide which
+	 * one it puts in the address bar — a canonical trailing-slash `UrlSerializer` is a common SEO
+	 * choice. Comparing the two as raw strings makes the nav's marking depend on that choice:
+	 * every item whose route was declared without the slash silently stopped matching, and only
+	 * the ancestors stayed lit, because their prefix test happens to tolerate it.
+	 *
+	 * @param path - A route path, in either form.
+	 * @returns The path without its trailing slash.
+	 */
+	private normalizePath(path: string): string {
+		return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path;
 	}
 
 	/**
@@ -663,9 +679,9 @@ export class HubNavStateService {
 	 */
 	isItemOrDescendantActive(item: HubNavItem, activeRoute: string): boolean {
 		if (item.route) {
-			const route = Array.isArray(item.route) ? item.route.join('/') : item.route;
+			const route = this.routeOf(item)!;
 			const [pathAndQuery, activeFragment] = activeRoute.split('#');
-			const activePath = pathAndQuery.split('?')[0];
+			const activePath = this.normalizePath(pathAndQuery.split('?')[0]);
 
 			if (route === activePath) {
 				// When an item defines a fragment, require exact fragment match.

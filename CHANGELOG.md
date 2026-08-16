@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [22.9.1] - 2026-08-16
+
+### Fixed
+
+- **An item stopped being marked active when the application serialized URLs with a trailing slash.** `/products` and `/products/` are the same place, and an application decides which one reaches the address bar — a canonical trailing-slash `UrlSerializer` is an ordinary SEO choice. Route matching compared the two as raw strings, so every item whose route was declared without the slash silently stopped matching. Only ancestors stayed lit, because their prefix test happens to tolerate one, which made the failure look like "only the section marks, never the page".
+
+    Worst on items that differ from their siblings only by `fragment`: none of them ever matched, so a scroll-spy panel appeared dead — the spy was writing the fragment on every scroll and nothing downstream agreed it had changed. Paths are now compared normalized, root excluded.
+
 ## [22.9.0] - 2026-08-15
 
 ### Added

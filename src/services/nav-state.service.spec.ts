@@ -373,6 +373,61 @@ describe('HubNavStateService', () => {
 			expect(service.isItemOrDescendantActive(testItems[0], '/home/42/edit')).toBe(true);
 		});
 
+		/**
+		 * `/home` and `/home/` are the same place, and an application decides which one reaches
+		 * the address bar — a canonical trailing-slash `UrlSerializer` is an ordinary SEO choice.
+		 * Comparing raw strings made the marking depend on that choice: every item declared
+		 * without the slash stopped matching, and only its ancestors stayed lit, because their
+		 * prefix test happens to tolerate one.
+		 */
+		it('matches a trailing-slash URL against a route declared without one', () => {
+			expect(service.isItemOrDescendantActive(testItems[0], '/home/')).toBe(true);
+		});
+
+		it('matches a trailing-slash route against a URL without one', () => {
+			const item: HubNavItem = { id: 'home', label: 'Home', type: 'link', route: '/home/' };
+			expect(service.isItemOrDescendantActive(item, '/home')).toBe(true);
+		});
+
+		it('keeps the root route intact rather than emptying it', () => {
+			const root: HubNavItem = { id: 'root', label: 'Root', type: 'link', route: '/' };
+			expect(service.isItemOrDescendantActive(root, '/')).toBe(true);
+		});
+
+		/**
+		 * The case this was found on: a page whose examples are one route apart only by fragment,
+		 * under a serializer that emits the canonical trailing slash. Nothing in the panel was
+		 * ever marked, and the scroll spy — which writes the fragment as you scroll — appeared
+		 * dead for the same reason.
+		 */
+		it('matches a fragment item under a trailing-slash serializer', () => {
+			const item: HubNavItem = {
+				id: 'example',
+				label: 'Select',
+				type: 'link',
+				route: '/en/forms/examples',
+				fragment: 'forms-select'
+			};
+
+			expect(service.isItemOrDescendantActive(item, '/en/forms/examples/#forms-select')).toBe(true);
+			expect(service.isItemOrDescendantActive(item, '/en/forms/examples/#forms-datepicker')).toBe(false);
+		});
+
+		/** Only the section actually scrolled to is marked, never the whole run at once. */
+		it('marks a single fragment sibling', () => {
+			const siblings: HubNavItem[] = [
+				{ id: 'a', label: 'A', type: 'link', route: '/en/forms/examples', fragment: 'a' },
+				{ id: 'b', label: 'B', type: 'link', route: '/en/forms/examples', fragment: 'b' },
+				{ id: 'group', label: 'Group', type: 'header' }
+			];
+
+			const active = siblings.filter((item) =>
+				service.isItemActiveAmongSiblings(item, siblings, '/en/forms/examples/#b')
+			);
+
+			expect(active.map((item) => item.id)).toEqual(['b']);
+		});
+
 		it('should keep a dropdown marked while one of its children holds the page', () => {
 			expect(service.isItemOrDescendantActive(testItems[1], '/services/web/7')).toBe(true);
 		});
