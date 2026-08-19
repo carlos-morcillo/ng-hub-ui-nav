@@ -129,6 +129,56 @@ describe('HubNavPanelComponent', () => {
 		expect(fixture.nativeElement.classList.contains('hub-nav-panel--drill-down')).toBe(true);
 	});
 
+	/**
+	 * The half a class assertion cannot reach.
+	 *
+	 * Marking the terminal panel is only useful if the rules that key off it can match, and
+	 * two of them could not: `:host-context(A):host(B)` is collapsed by Angular's shim into a
+	 * single compound — `A.B[_nghost]` — which asks one element to carry both a class of the
+	 * container and a class of the panel. It never matched, so a right-hand sidebar drew its
+	 * closing border on the inner edge and a horizontal nav drew one it should not have. No
+	 * error, because a selector that matches nothing raises none.
+	 *
+	 * Written as `:host-context(A).B`, the shim emits the descendant form alongside the
+	 * compound, and the descendant is the one that matches. This pins that shape.
+	 */
+	it('scopes the terminal-panel rules to an ancestor, not to one compound element', () => {
+		const rules: string[] = [];
+
+		for (const sheet of [...document.styleSheets]) {
+			let cssRules: CSSRule[];
+			try {
+				cssRules = [...(sheet.cssRules ?? [])];
+			} catch {
+				continue; // another origin: not ours, and not readable
+			}
+			for (const rule of cssRules) {
+				const selector = (rule as CSSStyleRule).selectorText;
+				if (selector?.includes('hub-nav-panel--last') && /container--right|nav--horizontal/.test(selector)) {
+					rules.push(selector);
+				}
+			}
+		}
+
+		expect(rules.length).toBeGreaterThan(0);
+
+		// Each of them has to offer at least one alternative where the container class sits on
+		// an ANCESTOR — a descendant combinator — rather than on the panel itself.
+		for (const selector of rules) {
+			const hasDescendantForm = selector
+				.split(',')
+				.some((part) => /(container--right|nav--horizontal)\s+\S/.test(part.trim()));
+
+			expect(hasDescendantForm).toBe(true);
+		}
+	});
+
+	it('should mark the terminal panel so a vertical stack can close its outer edge', () => {
+		componentRef.setInput('isLast', true);
+		fixture.detectChanges();
+		expect(fixture.nativeElement.classList.contains('hub-nav-panel--last')).toBe(true);
+	});
+
 	it('should use the configured back and close labels', () => {
 		const state = TestBed.inject(HubNavStateService);
 		state.setConfig({ ...state.config(), labels: { goBack: 'Volver', closePanel: 'Cerrar panel' } });

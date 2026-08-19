@@ -54,6 +54,12 @@ describe('HubNavPanelContainerComponent', () => {
 		expect(panels.length).toBe(2);
 	});
 
+	it('should mark only the terminal panel as the outer edge of the stack', () => {
+		const panels = fixture.nativeElement.querySelectorAll('hub-nav-panel');
+		expect(panels[0].classList.contains('hub-nav-panel--last')).toBe(false);
+		expect(panels[1].classList.contains('hub-nav-panel--last')).toBe(true);
+	});
+
 	it('should apply left class when sidebarSide is left', () => {
 		componentRef.setInput('sidebarSide', 'left');
 		fixture.detectChanges();

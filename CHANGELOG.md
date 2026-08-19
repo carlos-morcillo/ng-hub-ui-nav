@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+## [22.11.0] - 2026-08-19
+
+### Added
+
+- **`isLast` on `<hub-nav-panel>`.** Marks the outermost panel of a vertical stack so it can close the stack's edge. The container sets it for you; it is public because `HubNavPanelComponent` is, and anyone composing panels by hand needs the same switch.
+- **`--hub-nav-panel-last-shadow`** (default `none`). The shadow of that terminal panel. It is dropped by default because the panel now closes its edge with a border and the boundary should be drawn once — but "the border replaces the shadow" only holds for a theme that draws borders. One that separates its panels by shade, or by a cast shadow, sets this; `var(--hub-nav-panel-shadow)` keeps the panel's own.
+
+### Fixed
+
+- **The final panel of a vertical stack now closes its outer edge with a real border.** The library previously only drew each panel's leading divider and relied on a shadow for the terminal edge. Themes that remove or soften shadows therefore left the navigation visually open and could blend it with adjacent page chrome. The terminal panel now owns the matching border itself on both left and right sidebars.
+
+    The border sides are **physical**, not logical, and that is the second thing this fixes. The side a sidebar sits on is a layout decision — a nav configured to the right stays on the right when the document turns RTL — while a logical property turns with the text. Under RTL the closing border therefore landed on the sidebar's *inner* edge: measured at 0px outside and 1px inside. All four combinations of direction and side now put it on the outside.
+
+    And the terminal panel drops its shadow through `--hub-nav-panel-last-shadow` (default `none`) rather than being written off. "The border replaces the shadow" only holds for a theme that draws borders; one that separates its panels by shade or by a cast shadow was left with neither, and the shared `--hub-nav-panel-shadow` could not reach past this more specific rule. Set it to `var(--hub-nav-panel-shadow)` to keep the panel's own.
+
+    The two rules that place that border by context — the right-hand sidebar, where the outer edge is the start side, and a horizontal nav, where there is no vertical stack to close — are written as `:host-context(A).class` rather than `:host-context(A):host(.class)`. The second form reads naturally and cannot work: Angular's shim collapses it into a single compound, `A.class[_nghost]`, which asks one element to carry both a class of the container and a class of the panel. It matches nothing, silently, so a right sidebar would close its border on the inner edge and a horizontal nav would draw one it should not have. A case in the panel's bench now pins the descendant form.
+
 ## [22.10.0] - 2026-08-16
 
 ### Fixed

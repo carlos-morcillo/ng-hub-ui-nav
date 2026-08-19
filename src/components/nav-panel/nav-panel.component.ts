@@ -25,6 +25,7 @@ import { HubNavItemListComponent } from '../nav-item-list/nav-item-list.componen
 	host: {
 		class: 'hub-nav-panel',
 		'[class.hub-nav-panel--drill-down]': 'panel().isDrillDown',
+		'[class.hub-nav-panel--last]': 'isLast()',
 		'[style.width]': 'panelWidth()',
 		role: 'navigation',
 		'[attr.aria-label]': 'ariaLabel()',
@@ -40,6 +41,9 @@ export class HubNavPanelComponent {
 
 	/** Width of this panel (CSS value). */
 	readonly panelWidth = input<string>('16rem');
+
+	/** Whether this is the outermost visible panel in a vertical panel stack. */
+	readonly isLast = input<boolean>(false);
 
 	/** Optional custom template for rendering item content. */
 	readonly itemTemplate = input<TemplateRef<unknown> | null>(null);

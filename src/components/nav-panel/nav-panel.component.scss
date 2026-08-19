@@ -170,6 +170,43 @@
 	animation-name: hubNavPanelEnterRight;
 }
 
+/*
+ * The outermost panel closes the vertical stack with the same structural
+ * border used between panels. A shadow cannot provide that boundary reliably:
+ * it may be disabled by a theme or rendered beneath adjacent page chrome.
+ *
+ * PHYSICAL properties here, deliberately, where the rest of the panel is logical.
+ * The side a sidebar sits on is `sidebarSide`, a physical placement: a nav configured
+ * to the right stays on the right when the document turns RTL, because it is a layout
+ * decision and not a reading-order one. A logical property does turn — so under RTL the
+ * closing border landed on the sidebar's INNER edge, measured at 0px outside and 1px
+ * inside. Physical sides make the result independent of direction, which is what a
+ * physical placement deserves.
+ */
+:host(.hub-nav-panel--last) {
+	border-right: var(--hub-nav-panel-border-width) solid var(--hub-nav-panel-border-color);
+
+	// Dropped through a token rather than written off, because "the border replaces the
+	// shadow" is only true for a theme that draws borders. One that separates its panels by
+	// shade, or by a cast shadow, has nothing left once both are gone — and the shared
+	// `--hub-nav-panel-shadow` cannot bring it back here, since this rule is the more
+	// specific of the two. Defaults to `none`, so the terminal edge is drawn once and not
+	// twice; set it to `var(--hub-nav-panel-shadow)` to keep the panel's own.
+	box-shadow: var(--hub-nav-panel-last-shadow, none);
+}
+
+/* A right-hand sidebar closes on its left, whichever way the text runs. */
+:host-context(.hub-nav-panel-container--right).hub-nav-panel--last {
+	border-left: var(--hub-nav-panel-border-width) solid var(--hub-nav-panel-border-color);
+	border-right: none;
+}
+
+/* Horizontal panels form a row, not a vertical stack. */
+:host-context(.hub-nav--horizontal).hub-nav-panel--last {
+	border-left: none;
+	border-right: none;
+}
+
 @keyframes hubNavPanelEnterRight {
 	from {
 		opacity: 0;
